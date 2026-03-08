@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
+  Plus,
 } from "lucide-react";
 import {
   addMonths,
@@ -30,6 +31,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import NewTaskDialog from "@/components/NewTaskDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const priorityConfig: Record<string, { dot: string; label: string }> = {
   urgent: { dot: "bg-destructive", label: "Urgent" },
@@ -61,7 +64,10 @@ interface Task {
 
 const CalendarPage = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [newTaskDate, setNewTaskDate] = useState<Date | null>(null);
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const canCreate = profile?.role === "owner" || profile?.role === "admin";
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -184,11 +190,13 @@ const CalendarPage = () => {
             return (
               <div
                 key={key}
+                onClick={() => canCreate && setNewTaskDate(day)}
                 className={cn(
-                  "min-h-[100px] border-b border-r border-border/50 p-1.5 transition-colors",
+                  "group min-h-[100px] border-b border-r border-border/50 p-1.5 transition-colors",
                   !inMonth && "bg-background/50",
                   inMonth && "bg-card",
                   today && "bg-primary/[0.04]",
+                  canCreate && "cursor-pointer hover:bg-muted/40",
                   // Remove right border on last column
                   (idx + 1) % 7 === 0 && "border-r-0"
                 )}
@@ -207,11 +215,13 @@ const CalendarPage = () => {
                   >
                     {format(day, "d")}
                   </span>
-                  {dayTasks.length > 0 && (
+                  {dayTasks.length > 0 ? (
                     <span className="font-mono text-[9px] text-muted-foreground">
                       {dayTasks.length}
                     </span>
-                  )}
+                  ) : canCreate ? (
+                    <Plus className="h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  ) : null}
                 </div>
 
                 {/* Task pills */}
@@ -278,6 +288,14 @@ const CalendarPage = () => {
           })}
         </div>
       </div>
+
+      {newTaskDate && (
+        <NewTaskDialog
+          open={!!newTaskDate}
+          onOpenChange={(open) => !open && setNewTaskDate(null)}
+          defaultDate={newTaskDate}
+        />
+      )}
     </div>
   );
 };
