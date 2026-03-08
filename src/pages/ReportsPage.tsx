@@ -1,0 +1,358 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  IndianRupee, TrendingUp, Users, ClipboardList,
+  Loader2, BarChart3,
+} from "lucide-react";
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
+
+/* ── palette ── */
+const COLORS = {
+  primary: "hsl(217, 91%, 60%)",
+  success: "hsl(160, 84%, 39%)",
+  warning: "hsl(38, 92%, 50%)",
+  destructive: "hsl(0, 84%, 60%)",
+  accent: "hsl(199, 89%, 48%)",
+  muted: "hsl(215, 25%, 53%)",
+};
+
+const PIE_COLORS = [COLORS.success, COLORS.primary, COLORS.warning, COLORS.destructive, COLORS.muted];
+
+/* ── helpers ── */
+const fmtINR = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+const monthLabel = (d: string) => {
+  const dt = new Date(d + "-01");
+  return dt.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+};
+
+const ReportsPage = () => {
+  const { profile } = useAuth();
+  const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
+
+  /* ── data fetching ── */
+  const { data: invoices = [], isLoading: invLoading } = useQuery({
+    queryKey: ["reports-invoices"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("invoices")
+        .select("id, status, total_amount, due_date, paid_date, created_at, client_id")
+        .order("created_at", { ascending: true });
+      return data || [];
+    },
+  });
+
+  const { data: tasks = [], isLoading: taskLoading } = useQuery({
+    queryKey: ["reports-tasks"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tasks")
+        .select("id, status, assigned_to, completed_at, created_at, client_id");
+      return data || [];
+    },
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["reports-clients"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, client_name, status, monthly_payment, start_date");
+      return data || [];
+    },
+  });
+
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ["reports-team"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, name, role")
+        .eq("status", "active");
+      return data || [];
+    },
+  });
+
+  const isLoading = invLoading || taskLoading;
+
+  /* ── computed metrics ── */
+  const metrics = useMemo(() => {
+    const totalRevenue = invoices
+      .filter((i) => i.status === "paid")
+      .reduce((s, i) => s + (i.total_amount || 0), 0);
+    const outstanding = invoices
+      .filter((i) => i.status === "sent" || i.status === "overdue")
+      .reduce((s, i) => s + (i.total_amount || 0), 0);
+    const totalInvoices = invoices.length;
+    const paidInvoices = invoices.filter((i) => i.status === "paid").length;
+    const collectionRate = totalInvoices > 0 ? Math.round((paidInvoices / totalInvoices) * 100) : 0;
+    const activeClients = clients.filter((c) => c.status === "active").length;
+    const completedTasks = tasks.filter((t) => t.status === "completed").length;
+    const totalTasks = tasks.length;
+
+    return { totalRevenue, outstanding, collectionRate, activeClients, completedTasks, totalTasks };
+  }, [invoices, clients, tasks]);
+
+  /* ── monthly revenue trend ── */
+  const monthlyRevenue = useMemo(() => {
+    const map: Record<string, { month: string; collected: number; billed: number }> = {};
+    invoices.forEach((inv) => {
+      const month = (inv.created_at || "").slice(0, 7);
+      if (!month) return;
+      if (!map[month]) map[month] = { month, collected: 0, billed: 0 };
+      map[month].billed += inv.total_amount || 0;
+      if (inv.status === "paid") map[month].collected += inv.total_amount || 0;
+    });
+    return Object.values(map)
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .slice(-12)
+      .map((d) => ({ ...d, label: monthLabel(d.month) }));
+  }, [invoices]);
+
+  /* ── invoice status distribution ── */
+  const invoiceStatusDist = useMemo(() => {
+    const counts: Record<string, number> = { paid: 0, sent: 0, draft: 0, overdue: 0, cancelled: 0 };
+    invoices.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1; });
+    return Object.entries(counts)
+      .filter(([, v]) => v > 0)
+      .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }));
+  }, [invoices]);
+
+  /* ── team performance ── */
+  const teamPerformance = useMemo(() => {
+    return teamMembers.map((member) => {
+      const memberTasks = tasks.filter((t) => t.assigned_to === member.id);
+      const completed = memberTasks.filter((t) => t.status === "completed").length;
+      const inProgress = memberTasks.filter((t) => t.status === "in_progress").length;
+      const overdue = memberTasks.filter(
+        (t) => t.status !== "completed" && t.status === "overdue"
+      ).length;
+      const pending = memberTasks.filter((t) => t.status === "pending").length;
+      return {
+        name: member.name.split(" ")[0],
+        fullName: member.name,
+        completed,
+        inProgress,
+        overdue,
+        pending,
+        total: memberTasks.length,
+      };
+    }).filter((m) => m.total > 0)
+      .sort((a, b) => b.completed - a.completed);
+  }, [teamMembers, tasks]);
+
+  /* ── client revenue ranking ── */
+  const clientRevenue = useMemo(() => {
+    const map: Record<string, { name: string; revenue: number }> = {};
+    invoices
+      .filter((i) => i.status === "paid")
+      .forEach((inv) => {
+        const client = clients.find((c) => c.id === inv.client_id);
+        const name = client?.client_name || "Unknown";
+        if (!map[inv.client_id]) map[inv.client_id] = { name, revenue: 0 };
+        map[inv.client_id].revenue += inv.total_amount || 0;
+      });
+    return Object.values(map)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 8);
+  }, [invoices, clients]);
+
+  /* ── monthly new clients ── */
+  const monthlyClients = useMemo(() => {
+    const map: Record<string, number> = {};
+    clients.forEach((c) => {
+      const month = (c.start_date || "").slice(0, 7);
+      if (!month) return;
+      map[month] = (map[month] || 0) + 1;
+    });
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([month, count]) => ({ label: monthLabel(month), clients: count }));
+  }, [clients]);
+
+  const customTooltipStyle = {
+    backgroundColor: "hsl(218, 49%, 13%)",
+    border: "1px solid hsl(213, 50%, 24%)",
+    borderRadius: "8px",
+    fontSize: "12px",
+    color: "hsl(214, 32%, 91%)",
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Reports</h1>
+        <p className="text-sm text-muted-foreground">Revenue analytics, trends & team performance</p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {[
+          { label: "Total Revenue", value: fmtINR(metrics.totalRevenue), icon: IndianRupee, accent: "text-success" },
+          { label: "Outstanding", value: fmtINR(metrics.outstanding), icon: TrendingUp, accent: "text-warning" },
+          { label: "Collection Rate", value: `${metrics.collectionRate}%`, icon: BarChart3, accent: "text-primary" },
+          { label: "Active Clients", value: metrics.activeClients.toString(), icon: Users, accent: "text-accent" },
+        ].map((kpi) => (
+          <div key={kpi.label} className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2">
+              <kpi.icon className={`h-4 w-4 ${kpi.accent}`} />
+              <p className="font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                {kpi.label}
+              </p>
+            </div>
+            <p className={`mt-1 font-display text-2xl font-bold ${kpi.accent}`}>{kpi.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Row 1: Revenue Trend + Invoice Distribution */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Revenue Trend (area) */}
+        <div className="rounded-xl border border-border bg-card p-4 lg:col-span-2">
+          <h2 className="mb-4 font-mono text-[10px] font-medium uppercase tracking-widest text-primary">
+            Monthly Revenue Trend
+          </h2>
+          {monthlyRevenue.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">No invoice data yet</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={monthlyRevenue}>
+                <defs>
+                  <linearGradient id="gradCollected" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.success} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.success} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradBilled" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(213,50%,24%)" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: COLORS.muted }} />
+                <YAxis tick={{ fontSize: 11, fill: COLORS.muted }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={customTooltipStyle} formatter={(v: number) => fmtINR(v)} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Area type="monotone" dataKey="billed" name="Billed" stroke={COLORS.primary} fillOpacity={1} fill="url(#gradBilled)" />
+                <Area type="monotone" dataKey="collected" name="Collected" stroke={COLORS.success} fillOpacity={1} fill="url(#gradCollected)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Invoice Status Pie */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h2 className="mb-4 font-mono text-[10px] font-medium uppercase tracking-widest text-primary">
+            Invoice Status
+          </h2>
+          {invoiceStatusDist.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">No invoices yet</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={invoiceStatusDist}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={95}
+                  paddingAngle={3}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {invoiceStatusDist.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={customTooltipStyle} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Row 2: Team Performance + Client Revenue */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Team Performance (stacked bar) */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h2 className="mb-4 font-mono text-[10px] font-medium uppercase tracking-widest text-primary">
+            Team Performance
+          </h2>
+          {teamPerformance.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">No task assignments yet</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={teamPerformance} layout="vertical" barSize={18}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(213,50%,24%)" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: COLORS.muted }} />
+                <YAxis dataKey="name" type="category" width={70} tick={{ fontSize: 11, fill: COLORS.muted }} />
+                <Tooltip contentStyle={customTooltipStyle} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="completed" name="Completed" stackId="a" fill={COLORS.success} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="inProgress" name="In Progress" stackId="a" fill={COLORS.primary} />
+                <Bar dataKey="pending" name="Pending" stackId="a" fill={COLORS.muted} />
+                <Bar dataKey="overdue" name="Overdue" stackId="a" fill={COLORS.destructive} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Top Clients by Revenue (horizontal bar) */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h2 className="mb-4 font-mono text-[10px] font-medium uppercase tracking-widest text-primary">
+            Top Clients by Revenue
+          </h2>
+          {clientRevenue.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">No paid invoices yet</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={clientRevenue} layout="vertical" barSize={16}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(213,50%,24%)" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: COLORS.muted }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11, fill: COLORS.muted }} />
+                <Tooltip contentStyle={customTooltipStyle} formatter={(v: number) => fmtINR(v)} />
+                <Bar dataKey="revenue" name="Revenue" fill={COLORS.accent} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Row 3: New Clients Trend */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h2 className="mb-4 font-mono text-[10px] font-medium uppercase tracking-widest text-primary">
+          New Clients per Month
+        </h2>
+        {monthlyClients.length === 0 ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">No client data yet</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={monthlyClients} barSize={28}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(213,50%,24%)" />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: COLORS.muted }} />
+              <YAxis tick={{ fontSize: 11, fill: COLORS.muted }} allowDecimals={false} />
+              <Tooltip contentStyle={customTooltipStyle} />
+              <Bar dataKey="clients" name="New Clients" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ReportsPage;
