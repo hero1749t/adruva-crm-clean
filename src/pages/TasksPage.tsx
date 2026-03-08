@@ -443,6 +443,12 @@ const TasksPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <TaskDetailDrawer
+        task={detailTask}
+        open={!!detailTask}
+        onOpenChange={(open) => { if (!open) setDetailTask(null); }}
+      />
     </div>
   );
 };
