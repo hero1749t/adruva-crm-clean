@@ -30,6 +30,7 @@ import { sendStatusEmail } from "@/lib/send-status-email";
 import { notifyLeadAssigned } from "@/lib/email-notifications";
 import NewLeadDrawer from "@/components/NewLeadDrawer";
 import ImportLeadsDialog from "@/components/ImportLeadsDialog";
+import LeadsKanbanView from "@/components/leads/LeadsKanbanView";
 import { exportLeadsCsv } from "@/lib/csv-utils";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
