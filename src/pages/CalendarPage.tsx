@@ -98,6 +98,38 @@ const CalendarPage = () => {
   }, [tasks]);
 
   const reschedule = useMutation({
+    mutationFn: async ({ taskId, newDate }: { taskId: string; newDate: Date; oldDate: Date }) => {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ deadline: newDate.toISOString() })
+        .eq("id", taskId);
+      if (error) throw error;
+    },
+    onSuccess: (_, { taskId, newDate, oldDate }) => {
+      toast({
+        title: "Task rescheduled",
+        description: `Moved to ${format(newDate, "MMM d, yyyy h:mm a")}`,
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              rescheduleUndo.mutate({ taskId, newDate: oldDate });
+            }}
+          >
+            Undo
+          </Button>
+        ),
+      });
+      queryClient.invalidateQueries({ queryKey: ["calendar-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error rescheduling", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const rescheduleUndo = useMutation({
     mutationFn: async ({ taskId, newDate }: { taskId: string; newDate: Date }) => {
       const { error } = await supabase
         .from("tasks")
@@ -106,15 +138,12 @@ const CalendarPage = () => {
       if (error) throw error;
     },
     onSuccess: (_, { newDate }) => {
-      toast({
-        title: "Task rescheduled",
-        description: `Moved to ${format(newDate, "MMM d, yyyy h:mm a")}`,
-      });
+      toast({ title: "Undo successful", description: `Restored to ${format(newDate, "MMM d, yyyy h:mm a")}` });
       queryClient.invalidateQueries({ queryKey: ["calendar-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: (err: any) => {
-      toast({ title: "Error rescheduling", description: err.message, variant: "destructive" });
+      toast({ title: "Undo failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -136,7 +165,7 @@ const CalendarPage = () => {
       if (isSameDay(oldDeadline, newDate) && oldDeadline.getHours() === newDate.getHours() && viewMode === "day") return;
       if (viewMode !== "day" && format(oldDeadline, "yyyy-MM-dd") === format(newDate, "yyyy-MM-dd")) return;
 
-      reschedule.mutate({ taskId: task.id, newDate });
+      reschedule.mutate({ taskId: task.id, newDate, oldDate: oldDeadline });
     },
     [reschedule, viewMode]
   );
