@@ -58,7 +58,36 @@ const priorityOptions: { value: TaskPriority; label: string; color: string }[] =
   { value: "low", label: "Low", color: "bg-muted-foreground" },
 ];
 
-// Helper to extract function name from cron command URL
+const SendWeeklyReportButton = () => {
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const [sending, setSending] = useState(false);
+
+  const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
+  if (!isOwnerOrAdmin) return null;
+
+  const handleSend = async () => {
+    setSending(true);
+    try {
+      const { error } = await supabase.functions.invoke("weekly-report");
+      if (error) throw error;
+      toast({ title: "Weekly report sent", description: "Emails have been sent to all active team members." });
+    } catch (err: any) {
+      toast({ title: "Failed to send report", description: err.message || "Something went wrong", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Button variant="outline" size="sm" className="gap-2" onClick={handleSend} disabled={sending}>
+      {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+      Send Weekly Report
+    </Button>
+  );
+};
+
+
 const extractFunctionName = (command: string): string => {
   const match = command.match(/functions\/v1\/([a-z0-9-]+)/);
   return match ? match[1] : "unknown";
