@@ -72,6 +72,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Nullify foreign key references before deleting
+    await adminClient.from("leads").update({ assigned_to: null }).eq("assigned_to", userId);
+    await adminClient.from("tasks").update({ assigned_to: null }).eq("assigned_to", userId);
+    await adminClient.from("clients").update({ assigned_manager: null }).eq("assigned_manager", userId);
+    await adminClient.from("activity_logs").update({ user_id: null }).eq("user_id", userId);
+    await adminClient.from("notifications").delete().eq("user_id", userId);
+    await adminClient.from("lead_activities").delete().eq("created_by", userId);
+
     // Delete from auth (cascade will handle profiles)
     const { error } = await adminClient.auth.admin.deleteUser(userId);
 
