@@ -21,6 +21,7 @@ interface MonthViewProps {
   canCreate: boolean;
   canDrag: boolean;
   onDayClick: (day: Date) => void;
+  onDayDoubleClick?: (day: Date) => void;
 }
 
 const DroppableDay = ({
@@ -33,6 +34,7 @@ const DroppableDay = ({
   canCreate,
   canDrag,
   onDayClick,
+  onDayDoubleClick,
 }: {
   dateKey: string;
   day: Date;
@@ -43,6 +45,7 @@ const DroppableDay = ({
   canCreate: boolean;
   canDrag: boolean;
   onDayClick: (day: Date) => void;
+  onDayDoubleClick?: (day: Date) => void;
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: dateKey, data: { date: day } });
 
@@ -50,6 +53,7 @@ const DroppableDay = ({
     <div
       ref={setNodeRef}
       onClick={() => canCreate && onDayClick(day)}
+      onDoubleClick={() => onDayDoubleClick?.(day)}
       className={cn(
         "group min-h-[100px] border-b border-r border-border/50 p-1.5 transition-colors",
         !inMonth && "bg-background/50",
@@ -96,7 +100,7 @@ const DroppableDay = ({
   );
 };
 
-const MonthView = ({ currentMonth, tasksByDate, canCreate, canDrag, onDayClick }: MonthViewProps) => {
+const MonthView = ({ currentMonth, tasksByDate, canCreate, canDrag, onDayClick, onDayDoubleClick }: MonthViewProps) => {
   const calendarDays = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth));
     const end = endOfWeek(endOfMonth(currentMonth));
@@ -135,6 +139,7 @@ const MonthView = ({ currentMonth, tasksByDate, canCreate, canDrag, onDayClick }
               canCreate={canCreate}
               canDrag={canDrag}
               onDayClick={onDayClick}
+              onDayDoubleClick={onDayDoubleClick}
             />
           );
         })}

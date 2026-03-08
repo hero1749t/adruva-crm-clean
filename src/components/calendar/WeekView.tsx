@@ -18,6 +18,7 @@ interface WeekViewProps {
   canCreate: boolean;
   canDrag: boolean;
   onDayClick: (day: Date) => void;
+  onDayDoubleClick?: (day: Date) => void;
 }
 
 const DroppableWeekDay = ({
@@ -29,6 +30,7 @@ const DroppableWeekDay = ({
   canCreate,
   canDrag,
   onDayClick,
+  onDayDoubleClick,
 }: {
   dateKey: string;
   day: Date;
@@ -38,6 +40,7 @@ const DroppableWeekDay = ({
   canCreate: boolean;
   canDrag: boolean;
   onDayClick: (day: Date) => void;
+  onDayDoubleClick?: (day: Date) => void;
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: dateKey, data: { date: day } });
 
@@ -45,6 +48,7 @@ const DroppableWeekDay = ({
     <div
       ref={setNodeRef}
       onClick={() => canCreate && onDayClick(day)}
+      onDoubleClick={() => onDayDoubleClick?.(day)}
       className={cn(
         "group flex flex-col gap-1 border-r border-border/50 p-2 transition-colors",
         today && "bg-primary/[0.03]",
@@ -65,7 +69,7 @@ const DroppableWeekDay = ({
   );
 };
 
-const WeekView = ({ currentWeekDate, tasksByDate, canCreate, canDrag, onDayClick }: WeekViewProps) => {
+const WeekView = ({ currentWeekDate, tasksByDate, canCreate, canDrag, onDayClick, onDayDoubleClick }: WeekViewProps) => {
   const weekDays = useMemo(() => {
     const start = startOfWeek(currentWeekDate);
     const end = endOfWeek(currentWeekDate);
@@ -120,6 +124,7 @@ const WeekView = ({ currentWeekDate, tasksByDate, canCreate, canDrag, onDayClick
               canCreate={canCreate}
               canDrag={canDrag}
               onDayClick={onDayClick}
+              onDayDoubleClick={onDayDoubleClick}
             />
           );
         })}
