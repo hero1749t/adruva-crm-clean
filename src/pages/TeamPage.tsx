@@ -103,11 +103,18 @@ const TeamPage = () => {
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to create user");
+
+      // Assign custom role if selected
+      if (formData.customRoleId && result.userId) {
+        await supabase.from("profiles").update({ custom_role_id: formData.customRoleId }).eq("id", result.userId);
+      }
+
       return { ...result, name: parsed.data.name, role: parsed.data.role, email: parsed.data.email };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["team"] });
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
+      queryClient.invalidateQueries({ queryKey: ["profiles-role-count"] });
       toast({ title: "Team member created" });
       setFormData({ name: "", email: "", password: "", role: "team", customRoleId: "" });
       setDialogOpen(false);
