@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 import { OnboardingTemplatesSection } from "@/components/OnboardingChecklist";
+import { WeeklyReportPreviewButton } from "@/components/WeeklyReportPreview";
 
 type TaskPriority = Database["public"]["Enums"]["task_priority"];
 
@@ -165,6 +166,7 @@ const CronJobsMonitor = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <WeeklyReportPreviewButton />
           <SendWeeklyReportButton />
           <Button
             variant="outline"
