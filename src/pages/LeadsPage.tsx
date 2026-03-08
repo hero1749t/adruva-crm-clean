@@ -432,10 +432,31 @@ const LeadsPage = () => {
                     <td className="px-4 py-3 font-medium text-foreground">{lead.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{lead.company_name || "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{lead.phone}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
-                        {statusConf.label}
-                      </span>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      {isOwnerOrAdmin ? (
+                        <Select
+                          value={lead.status}
+                          onValueChange={(v) => {
+                            supabase.from("leads").update({ status: v as any }).eq("id", lead.id).then(() => {
+                              queryClient.invalidateQueries({ queryKey: ["leads"] });
+                              logActivity({ entity: "lead", entityId: lead.id, action: "status_changed", metadata: { name: lead.name, from: lead.status, to: v } });
+                            });
+                          }}
+                        >
+                          <SelectTrigger className={`h-7 w-[130px] border-none px-2.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(leadStatusConfig).map(([key, config]) => (
+                              <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className={`inline-block rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
+                          {statusConf.label}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{assignedName}</td>
                     <td className="px-4 py-3 text-muted-foreground capitalize">{lead.source?.replace("_", " ") || "—"}</td>
