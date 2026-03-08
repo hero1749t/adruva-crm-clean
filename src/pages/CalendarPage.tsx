@@ -105,16 +105,45 @@ const CalendarPage = () => {
         .eq("id", taskId);
       if (error) throw error;
     },
-    onSuccess: (_, { newDate }) => {
+    onSuccess: (_, { taskId, newDate, oldDate }) => {
       toast({
         title: "Task rescheduled",
         description: `Moved to ${format(newDate, "MMM d, yyyy h:mm a")}`,
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              rescheduleUndo.mutate({ taskId, newDate: oldDate });
+            }}
+          >
+            Undo
+          </Button>
+        ),
       });
       queryClient.invalidateQueries({ queryKey: ["calendar-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: (err: any) => {
       toast({ title: "Error rescheduling", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const rescheduleUndo = useMutation({
+    mutationFn: async ({ taskId, newDate }: { taskId: string; newDate: Date }) => {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ deadline: newDate.toISOString() })
+        .eq("id", taskId);
+      if (error) throw error;
+    },
+    onSuccess: (_, { newDate }) => {
+      toast({ title: "Undo successful", description: `Restored to ${format(newDate, "MMM d, yyyy h:mm a")}` });
+      queryClient.invalidateQueries({ queryKey: ["calendar-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Undo failed", description: err.message, variant: "destructive" });
     },
   });
 
