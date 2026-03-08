@@ -132,7 +132,7 @@ const ReportsPage = () => {
   /* ── monthly revenue trend ── */
   const monthlyRevenue = useMemo(() => {
     const map: Record<string, { month: string; collected: number; billed: number }> = {};
-    invoices.forEach((inv) => {
+    filteredInvoices.forEach((inv) => {
       const month = (inv.created_at || "").slice(0, 7);
       if (!month) return;
       if (!map[month]) map[month] = { month, collected: 0, billed: 0 };
@@ -143,21 +143,21 @@ const ReportsPage = () => {
       .sort((a, b) => a.month.localeCompare(b.month))
       .slice(-12)
       .map((d) => ({ ...d, label: monthLabel(d.month) }));
-  }, [invoices]);
+  }, [filteredInvoices]);
 
   /* ── invoice status distribution ── */
   const invoiceStatusDist = useMemo(() => {
     const counts: Record<string, number> = { paid: 0, sent: 0, draft: 0, overdue: 0, cancelled: 0 };
-    invoices.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1; });
+    filteredInvoices.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1; });
     return Object.entries(counts)
       .filter(([, v]) => v > 0)
       .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }));
-  }, [invoices]);
+  }, [filteredInvoices]);
 
   /* ── team performance ── */
   const teamPerformance = useMemo(() => {
     return teamMembers.map((member) => {
-      const memberTasks = tasks.filter((t) => t.assigned_to === member.id);
+      const memberTasks = filteredTasks.filter((t) => t.assigned_to === member.id);
       const completed = memberTasks.filter((t) => t.status === "completed").length;
       const inProgress = memberTasks.filter((t) => t.status === "in_progress").length;
       const overdue = memberTasks.filter(
@@ -175,12 +175,12 @@ const ReportsPage = () => {
       };
     }).filter((m) => m.total > 0)
       .sort((a, b) => b.completed - a.completed);
-  }, [teamMembers, tasks]);
+  }, [teamMembers, filteredTasks]);
 
   /* ── client revenue ranking ── */
   const clientRevenue = useMemo(() => {
     const map: Record<string, { name: string; revenue: number }> = {};
-    invoices
+    filteredInvoices
       .filter((i) => i.status === "paid")
       .forEach((inv) => {
         const client = clients.find((c) => c.id === inv.client_id);
@@ -191,7 +191,7 @@ const ReportsPage = () => {
     return Object.values(map)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 8);
-  }, [invoices, clients]);
+  }, [filteredInvoices, clients]);
 
   /* ── monthly new clients ── */
   const monthlyClients = useMemo(() => {
