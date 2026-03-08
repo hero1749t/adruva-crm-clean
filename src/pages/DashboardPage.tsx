@@ -67,6 +67,7 @@ const CHART_COLORS = [
 ];
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const { profile } = useAuth();
 
   const { data: leads = [] } = useQuery({
