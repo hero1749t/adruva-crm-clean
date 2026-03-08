@@ -139,11 +139,12 @@ const NewLeadDrawer = ({ open, onOpenChange }: NewLeadDrawerProps) => {
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent className="w-full overflow-y-auto border-border bg-card sm:max-w-lg">
         <SheetHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="font-display text-xl font-bold text-foreground">
-              New Lead
-            </SheetTitle>
-          </div>
+          <SheetTitle className="font-display text-xl font-bold text-foreground">
+            New Lead
+          </SheetTitle>
+          <SheetDescription className="text-sm text-muted-foreground">
+            Add a new lead to your pipeline
+          </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
