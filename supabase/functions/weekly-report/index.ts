@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     });
     const sourceRows = Object.entries(sourceCounts)
       .sort((a, b) => b[1] - a[1])
-      .map(([name, count]) => `<tr><td style="padding:6px 12px;border-bottom:1px solid #e2e8f0">${name}</td><td style="padding:6px 12px;border-bottom:1px solid #e2e8f0;text-align:right">${count}</td></tr>`)
+      .map(([name, count]) => `<tr><td style="padding:10px 16px;border-bottom:1px solid #1e293b;color:#cbd5e1;font-size:13px">${name}</td><td style="padding:10px 16px;border-bottom:1px solid #1e293b;text-align:right;color:#f1f5f9;font-weight:600;font-size:13px">${count}</td></tr>`)
       .join("");
 
     // Top 5 clients by revenue
