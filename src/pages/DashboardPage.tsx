@@ -13,6 +13,7 @@ import {
   UserCog,
   Shield,
   Trash2,
+  TrendingDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -131,6 +132,30 @@ const DashboardPage = () => {
     count: leads.filter((l) => l.status === key).length,
   }));
 
+  // Conversion funnel: stage-to-stage rates
+  const funnelStages = ["new_lead", "audit_booked", "audit_done", "in_progress", "lead_won"];
+  const funnelStageLabels = ["New Lead", "Audit Booked", "Audit Done", "In Progress", "Won"];
+  const FUNNEL_COLORS = ["hsl(217, 91%, 60%)", "hsl(199, 89%, 48%)", "hsl(38, 92%, 50%)", "hsl(160, 84%, 39%)", "hsl(142, 71%, 45%)"];
+
+  const conversionFunnelData = funnelStages.map((stage, i) => {
+    // Count leads that reached this stage or beyond
+    const reachedCount = leads.filter((l) => {
+      const idx = funnelStages.indexOf(l.status as string);
+      // lead_lost doesn't count toward funnel progression
+      return idx >= i || (l.status === "lead_lost" && funnelStages.indexOf("lead_lost") >= i);
+    }).length;
+    // For lead_won, only count exact matches
+    const count = i === funnelStages.length - 1
+      ? leads.filter((l) => l.status === "lead_won").length
+      : reachedCount;
+    return {
+      name: funnelStageLabels[i],
+      value: Math.max(count, 0),
+      fill: FUNNEL_COLORS[i],
+      rate: totalLeads > 0 ? ((count / totalLeads) * 100).toFixed(0) + "%" : "0%",
+    };
+  });
+
   const clientDonut = [
     { name: "Active", value: clients.filter((c) => c.status === "active").length },
     { name: "Paused", value: clients.filter((c) => c.status === "paused").length },
@@ -218,6 +243,59 @@ const DashboardPage = () => {
             </PieChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Conversion Funnel */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <TrendingDown className="h-5 w-5 text-primary" />
+          <div>
+            <h3 className="font-display text-base font-bold text-foreground">Pipeline Conversion Funnel</h3>
+            <p className="text-xs text-muted-foreground">Stage-to-stage progression from all {totalLeads} leads</p>
+          </div>
+        </div>
+        {totalLeads === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">No leads yet to show conversion data</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {conversionFunnelData.map((stage, i) => {
+              const pct = totalLeads > 0 ? (stage.value / totalLeads) * 100 : 0;
+              const prevPct = i > 0 && conversionFunnelData[i - 1].value > 0
+                ? ((stage.value / conversionFunnelData[i - 1].value) * 100).toFixed(0)
+                : null;
+              return (
+                <div key={stage.name} className="flex items-center gap-3">
+                  <span className="w-28 shrink-0 text-right text-xs font-medium text-muted-foreground">
+                    {stage.name}
+                  </span>
+                  <div className="relative flex-1 h-9 rounded-lg bg-muted/30 overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-lg transition-all duration-700 ease-out"
+                      style={{
+                        width: `${Math.max(pct, 2)}%`,
+                        backgroundColor: stage.fill,
+                        opacity: 0.85,
+                      }}
+                    />
+                    <div className="relative z-10 flex h-full items-center justify-between px-3">
+                      <span className="text-xs font-bold text-foreground drop-shadow-sm">
+                        {stage.value} lead{stage.value !== 1 ? "s" : ""}
+                      </span>
+                      <span className="text-[10px] font-mono font-medium text-foreground/80 drop-shadow-sm">
+                        {stage.rate}
+                        {prevPct && (
+                          <span className="ml-1.5 text-muted-foreground">
+                            ({prevPct}% from prev)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Recent Team Activity */}
