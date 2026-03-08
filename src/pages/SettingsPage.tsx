@@ -500,6 +500,9 @@ const SettingsPage = () => {
           </ul>
         </div>
       </div>
+
+      {/* Cron Jobs Monitoring Section */}
+      <CronJobsMonitor />
     </div>
   );
 };
