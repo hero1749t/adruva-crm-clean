@@ -135,6 +135,30 @@ const DashboardPage = () => {
     count: leads.filter((l) => l.status === key).length,
   }));
 
+  // Conversion funnel: stage-to-stage rates
+  const funnelStages = ["new_lead", "audit_booked", "audit_done", "in_progress", "lead_won"];
+  const funnelStageLabels = ["New Lead", "Audit Booked", "Audit Done", "In Progress", "Won"];
+  const FUNNEL_COLORS = ["hsl(217, 91%, 60%)", "hsl(199, 89%, 48%)", "hsl(38, 92%, 50%)", "hsl(160, 84%, 39%)", "hsl(142, 71%, 45%)"];
+
+  const conversionFunnelData = funnelStages.map((stage, i) => {
+    // Count leads that reached this stage or beyond
+    const reachedCount = leads.filter((l) => {
+      const idx = funnelStages.indexOf(l.status as string);
+      // lead_lost doesn't count toward funnel progression
+      return idx >= i || (l.status === "lead_lost" && funnelStages.indexOf("lead_lost") >= i);
+    }).length;
+    // For lead_won, only count exact matches
+    const count = i === funnelStages.length - 1
+      ? leads.filter((l) => l.status === "lead_won").length
+      : reachedCount;
+    return {
+      name: funnelStageLabels[i],
+      value: Math.max(count, 0),
+      fill: FUNNEL_COLORS[i],
+      rate: totalLeads > 0 ? ((count / totalLeads) * 100).toFixed(0) + "%" : "0%",
+    };
+  });
+
   const clientDonut = [
     { name: "Active", value: clients.filter((c) => c.status === "active").length },
     { name: "Paused", value: clients.filter((c) => c.status === "paused").length },
