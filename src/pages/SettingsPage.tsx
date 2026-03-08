@@ -105,7 +105,7 @@ const SettingsPage = () => {
     },
   });
 
-
+  const { data: templates = [], isLoading } = useQuery({
     queryKey: ["task-templates"],
     queryFn: async () => {
       const { data } = await supabase
