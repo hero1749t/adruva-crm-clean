@@ -144,18 +144,20 @@ const TeamPage = () => {
   });
 
   const updateRole = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+    mutationFn: async ({ userId, newRole, memberName, oldRole }: { userId: string; newRole: string; memberName: string; oldRole: string }) => {
       const { error } = await supabase
         .from("profiles")
         .update({ role: newRole as any })
         .eq("id", userId);
       if (error) throw error;
+      return { userId, newRole, memberName, oldRole };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["team"] });
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
       toast({ title: "Role updated" });
       setRoleEditId(null);
+      logActivity({ entity: "team", entityId: data.userId, action: "role_changed", metadata: { member_name: data.memberName, old_role: data.oldRole, new_role: data.newRole } });
     },
     onError: (err: Error) => {
       toast({ title: "Failed to update role", description: err.message, variant: "destructive" });
