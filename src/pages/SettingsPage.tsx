@@ -14,6 +14,11 @@ import {
   CalendarClock,
   Clock,
   AlertTriangle,
+  RefreshCw,
+  Activity,
+  CheckCircle2,
+  XCircle,
+  Timer,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
