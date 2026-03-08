@@ -241,7 +241,7 @@ const TasksPage = () => {
             className="h-9 border-border bg-muted/30 pl-9 text-sm"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <SelectTrigger className="h-9 w-36 border-border bg-muted/30 text-sm">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
