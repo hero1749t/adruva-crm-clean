@@ -4,6 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { notifyLeadAssigned, notifyClientCreated } from "@/lib/email-notifications";
+import { sendStatusEmail } from "@/lib/send-status-email";
 import {
   ArrowLeft, Phone, Mail, Building2, Globe, StickyNote,
   Check, X, Pencil, MessageSquare, Calendar, FileText, Send, Loader2,
