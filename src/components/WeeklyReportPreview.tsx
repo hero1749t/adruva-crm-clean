@@ -6,6 +6,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -45,6 +52,22 @@ export const WeeklyReportPreviewButton = () => {
 
 const PreviewContent = ({ profileName, profileId }: { profileName: string; profileId: string }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("owner");
+  const [selectedMemberId, setSelectedMemberId] = useState(profileId);
+
+  const { data: teamMembers } = useQuery({
+    queryKey: ["weekly-report-team-members"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, name, role")
+        .eq("status", "active")
+        .order("name");
+      return data || [];
+    },
+  });
+
+  const selectedMember = teamMembers?.find((m) => m.id === selectedMemberId);
+  const displayName = viewMode === "team" && selectedMember ? selectedMember.name : profileName;
 
   const { data, isLoading } = useQuery({
     queryKey: ["weekly-report-preview"],
@@ -108,26 +131,41 @@ const PreviewContent = ({ profileName, profileId }: { profileName: string; profi
   });
   const topClients = Object.values(clientRevMap).sort((a, b) => b.rev - a.rev).slice(0, 5);
 
-  // Team member scoped metrics
-  const myTasks = tasks.filter((t) => t.assigned_to === profileId);
+  // Team member scoped metrics (uses selected member)
+  const scopeId = selectedMemberId;
+  const myTasks = tasks.filter((t) => t.assigned_to === scopeId);
   const myCompleted = myTasks.filter((t) => t.status === "completed").length;
   const myOverdue = myTasks.filter((t) => t.status === "overdue").length;
   const myPending = myTasks.filter((t) => t.status === "pending").length;
-  const myLeads = leads.filter((l) => l.assigned_to === profileId);
-  const myClients = clients.filter((c) => c.assigned_manager === profileId);
+  const myLeads = leads.filter((l) => l.assigned_to === scopeId);
+  const myClients = clients.filter((c) => c.assigned_manager === scopeId);
 
   const dateStr = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
   return (
     <div className="p-4">
-      {/* View Toggle */}
-      <div className="flex justify-center mb-4">
+      {/* View Toggle + Member Selector */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
           <TabsList>
             <TabsTrigger value="owner">Owner / Admin View</TabsTrigger>
             <TabsTrigger value="team">Team Member View</TabsTrigger>
           </TabsList>
         </Tabs>
+        {viewMode === "team" && teamMembers && teamMembers.length > 0 && (
+          <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+            <SelectTrigger className="w-[200px] h-9 text-sm">
+              <SelectValue placeholder="Select member" />
+            </SelectTrigger>
+            <SelectContent>
+              {teamMembers.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name} <span className="text-muted-foreground ml-1">({m.role})</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <div className="rounded-xl overflow-hidden border border-border" style={{ background: "#0b1120" }}>
@@ -149,7 +187,7 @@ const PreviewContent = ({ profileName, profileId }: { profileName: string; profi
           {/* Body */}
           <div className="p-8" style={{ background: "#0f172a", border: "1px solid #1e3a5f", borderTop: "none", borderBottom: "none" }}>
             <p className="text-[15px] mb-7" style={{ color: "#94a3b8" }}>
-              Hi <strong style={{ color: "#f1f5f9" }}>{profileName}</strong>, here's your performance snapshot for the week.
+              Hi <strong style={{ color: "#f1f5f9" }}>{displayName}</strong>, here's your performance snapshot for the week.
             </p>
 
             {/* Primary KPIs */}
