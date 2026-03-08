@@ -12,6 +12,7 @@ interface TaskRow {
 
 interface TeamLeaderboardProps {
   tasks: TaskRow[];
+  dateRange?: string;
 }
 
 interface MemberStats {
