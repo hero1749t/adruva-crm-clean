@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import {
   BarChart,
@@ -65,6 +66,7 @@ const CHART_COLORS = [
 ];
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const { profile } = useAuth();
 
   const { data: leads = [] } = useQuery({
@@ -242,8 +244,23 @@ const DashboardPage = () => {
                 }
               }
 
+              const getEntityLink = () => {
+                const entity = log.entity;
+                const id = log.entity_id;
+                if (entity === "lead") return `/leads/${id}`;
+                if (entity === "client") return `/clients/${id}`;
+                if (entity === "task") return `/tasks`;
+                if (entity === "team") return `/team`;
+                return null;
+              };
+              const link = getEntityLink();
+
               return (
-                <div key={log.id} className="flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/30">
+                <div
+                  key={log.id}
+                  className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/30 ${link ? "cursor-pointer" : ""}`}
+                  onClick={() => link && navigate(link)}
+                >
                   <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/50 ${actionColor}`}>
                     <ActionIcon className="h-3.5 w-3.5" />
                   </div>
