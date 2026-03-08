@@ -63,6 +63,7 @@ const ClientDetailPage = () => {
 
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const { healthScore } = useClientHealthScore(id || "");
 
   const { data: client, isLoading } = useQuery({
     queryKey: ["client", id],
