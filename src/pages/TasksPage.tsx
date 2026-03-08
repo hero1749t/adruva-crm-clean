@@ -312,7 +312,7 @@ const TasksPage = () => {
                 <td colSpan={isOwnerOrAdmin ? 7 : 6} className="px-4 py-12 text-center text-muted-foreground">No tasks found</td>
               </tr>
             ) : (
-              tasks.map((task) => {
+              paged.map((task) => {
                 const priorityConf = taskPriorityConfig[task.priority || "medium"];
                 const statusConf = taskStatusConfig[task.status || "pending"];
                 const isOverdue = task.status === "overdue";
