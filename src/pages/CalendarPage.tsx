@@ -64,7 +64,10 @@ interface Task {
 
 const CalendarPage = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [newTaskDate, setNewTaskDate] = useState<Date | null>(null);
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const canCreate = profile?.role === "owner" || profile?.role === "admin";
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
