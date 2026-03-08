@@ -14,6 +14,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import NewLeadDrawer from "@/components/NewLeadDrawer";
+import ImportLeadsDialog from "@/components/ImportLeadsDialog";
+import { exportLeadsCsv } from "@/lib/csv-utils";
 
 const leadStatusConfig: Record<string, { label: string; color: string }> = {
   new_lead: { label: "New Lead", color: "bg-muted text-muted-foreground" },
@@ -29,6 +31,7 @@ const LeadsPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const perPage = 20;
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -67,10 +70,10 @@ const LeadsPage = () => {
         </div>
         {isOwnerOrAdmin && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> Import
             </Button>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => exportLeadsCsv(leads)}>
               <Download className="h-4 w-4" /> Export
             </Button>
             <Button size="sm" className="gap-2" onClick={() => setDrawerOpen(true)}>
@@ -173,6 +176,7 @@ const LeadsPage = () => {
       )}
 
       <NewLeadDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
+      <ImportLeadsDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 };
