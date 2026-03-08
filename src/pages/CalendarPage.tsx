@@ -215,11 +215,13 @@ const CalendarPage = () => {
                   >
                     {format(day, "d")}
                   </span>
-                  {dayTasks.length > 0 && (
+                  {dayTasks.length > 0 ? (
                     <span className="font-mono text-[9px] text-muted-foreground">
                       {dayTasks.length}
                     </span>
-                  )}
+                  ) : canCreate ? (
+                    <Plus className="h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  ) : null}
                 </div>
 
                 {/* Task pills */}
