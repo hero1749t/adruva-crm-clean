@@ -144,14 +144,28 @@ const PreviewContent = ({ profileName, profileId }: { profileName: string; profi
 
   return (
     <div className="p-4">
-      {/* View Toggle */}
-      <div className="flex justify-center mb-4">
+      {/* View Toggle + Member Selector */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
           <TabsList>
             <TabsTrigger value="owner">Owner / Admin View</TabsTrigger>
             <TabsTrigger value="team">Team Member View</TabsTrigger>
           </TabsList>
         </Tabs>
+        {viewMode === "team" && teamMembers && teamMembers.length > 0 && (
+          <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+            <SelectTrigger className="w-[200px] h-9 text-sm">
+              <SelectValue placeholder="Select member" />
+            </SelectTrigger>
+            <SelectContent>
+              {teamMembers.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name} <span className="text-muted-foreground ml-1">({m.role})</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <div className="rounded-xl overflow-hidden border border-border" style={{ background: "#0b1120" }}>
