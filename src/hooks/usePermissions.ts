@@ -45,7 +45,7 @@ export function useCustomRoles() {
         .order("is_system", { ascending: false })
         .order("name");
       if (error) throw error;
-      return (data || []) as CustomRole[];
+      return (data || []) as unknown as CustomRole[];
     },
   });
 }
