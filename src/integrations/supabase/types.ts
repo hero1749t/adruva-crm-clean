@@ -168,6 +168,75 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          billing_period_end: string | null
+          billing_period_start: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          invoice_number: string
+          notes: string | null
+          paid_date: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          due_date: string
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          paid_date?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          paid_date?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_activities: {
         Row: {
           content: string
@@ -623,6 +692,7 @@ export type Database = {
     Enums: {
       billing_status: "due" | "paid" | "overdue"
       client_status: "active" | "paused" | "completed"
+      invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
       lead_status:
         | "new_lead"
         | "audit_booked"
@@ -763,6 +833,7 @@ export const Constants = {
     Enums: {
       billing_status: ["due", "paid", "overdue"],
       client_status: ["active", "paused", "completed"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
       lead_status: [
         "new_lead",
         "audit_booked",

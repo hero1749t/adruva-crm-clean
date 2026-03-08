@@ -11,6 +11,7 @@ import {
   ScrollText,
   ChevronLeft,
   ChevronRight,
+  Receipt,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +29,7 @@ const navItems: NavItem[] = [
   { icon: UserCheck, label: "Clients", path: "/clients" },
   { icon: ClipboardList, label: "Tasks", path: "/tasks" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
+  { icon: Receipt, label: "Invoices", path: "/invoices", roles: ["owner", "admin"] },
   { icon: UsersRound, label: "Team", path: "/team", roles: ["owner"] },
   { icon: Settings, label: "Settings", path: "/settings", roles: ["owner"] },
   { icon: ScrollText, label: "Logs", path: "/logs", roles: ["owner", "admin"] },
