@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Trash2, MoreHorizontal, UserX, UserCheck } from "lucide-react";
+import { Plus, Loader2, Trash2, MoreHorizontal, UserX, UserCheck, Shield, Pencil, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Navigate } from "react-router-dom";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -21,10 +22,11 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { logActivity } from "@/hooks/useActivityLog";
-import { useCustomRoles } from "@/hooks/usePermissions";
+import { useCustomRoles, type CustomRole, type RolePermissions, DEFAULT_PERMISSIONS } from "@/hooks/usePermissions";
 import { usePermissions } from "@/hooks/usePermissions";
 
 const roleBadge: Record<string, string> = {
