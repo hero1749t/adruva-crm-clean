@@ -250,14 +250,24 @@ const LeadsPage = () => {
           </span>
           <div className="ml-auto flex items-center gap-2">
             {isOwnerOrAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => setAssignDialogOpen(true)}
-              >
-                <UserPlus className="h-4 w-4" /> Assign
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setStatusDialogOpen(true)}
+                >
+                  <ArrowUpDown className="h-4 w-4" /> Status
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setAssignDialogOpen(true)}
+                >
+                  <UserPlus className="h-4 w-4" /> Assign
+                </Button>
+              </>
             )}
             {isOwner && (
               <Button
