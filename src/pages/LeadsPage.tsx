@@ -9,38 +9,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockLeads, leadStatusConfig, currentUser, mockTeam, type LeadStatus } from "@/lib/mock-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+const leadStatusConfig: Record<string, { label: string; color: string }> = {
+  new_lead: { label: "New Lead", color: "bg-muted text-muted-foreground" },
+  audit_booked: { label: "Audit Booked", color: "bg-primary/20 text-primary" },
+  audit_done: { label: "Audit Done", color: "bg-accent/20 text-accent" },
+  in_progress: { label: "In Progress", color: "bg-warning/20 text-warning" },
+  lead_won: { label: "Lead Won", color: "bg-success/20 text-success" },
+  lead_lost: { label: "Lead Lost", color: "bg-destructive/20 text-destructive" },
+};
 
 const LeadsPage = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const perPage = 20;
+  const { profile } = useAuth();
+  const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
 
-  const isOwnerOrAdmin = currentUser.role === "owner" || currentUser.role === "admin";
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ["leads", statusFilter, search],
+    queryFn: async () => {
+      let query = supabase
+        .from("leads")
+        .select("*, profiles!leads_assigned_to_fkey(name)")
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false });
 
-  const filtered = mockLeads
-    .filter((l) => !l.is_deleted)
-    .filter((l) => statusFilter === "all" || l.status === statusFilter)
-    .filter(
-      (l) =>
-        !search ||
-        l.name.toLowerCase().includes(search.toLowerCase()) ||
-        l.email.toLowerCase().includes(search.toLowerCase()) ||
-        l.company_name?.toLowerCase().includes(search.toLowerCase()) ||
-        l.phone.includes(search)
-    );
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter as any);
+      }
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,company_name.ilike.%${search}%`);
+      }
 
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+      const { data } = await query;
+      return data || [];
+    },
+  });
+
+  const totalPages = Math.ceil(leads.length / perPage);
+  const paged = leads.slice((page - 1) * perPage, page * perPage);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Leads</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{filtered.length} total leads</p>
+          <p className="mt-1 text-sm text-muted-foreground">{leads.length} total leads</p>
         </div>
         {isOwnerOrAdmin && (
           <div className="flex gap-2">
@@ -57,7 +76,6 @@ const LeadsPage = () => {
         )}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -81,7 +99,6 @@ const LeadsPage = () => {
         </Select>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
           <thead>
@@ -96,44 +113,50 @@ const LeadsPage = () => {
             </tr>
           </thead>
           <tbody>
-            {paged.map((lead) => {
-              const statusConf = leadStatusConfig[lead.status];
-              return (
-                <tr
-                  key={lead.id}
-                  className="border-b border-border/50 transition-colors hover:bg-primary/[0.03] cursor-pointer"
-                >
-                  <td className="px-4 py-3 font-medium text-foreground">{lead.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{lead.company_name || "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{lead.phone}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
-                      {statusConf.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{lead.assigned_to_name || "Unassigned"}</td>
-                  <td className="px-4 py-3 text-muted-foreground capitalize">{lead.source?.replace("_", " ") || "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{new Date(lead.created_at).toLocaleDateString()}</td>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-border/50">
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <td key={j} className="px-4 py-3">
+                      <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                    </td>
+                  ))}
                 </tr>
-              );
-            })}
-            {paged.length === 0 && (
+              ))
+            ) : paged.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                   No leads found
                 </td>
               </tr>
+            ) : (
+              paged.map((lead) => {
+                const statusConf = leadStatusConfig[lead.status] || leadStatusConfig.new_lead;
+                const assignedName = (lead as any).profiles?.name || "Unassigned";
+                return (
+                  <tr key={lead.id} className="border-b border-border/50 transition-colors hover:bg-primary/[0.03] cursor-pointer">
+                    <td className="px-4 py-3 font-medium text-foreground">{lead.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{lead.company_name || "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{lead.phone}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
+                        {statusConf.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{assignedName}</td>
+                    <td className="px-4 py-3 text-muted-foreground capitalize">{lead.source?.replace("_", " ") || "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{lead.created_at ? new Date(lead.created_at).toLocaleDateString() : "—"}</td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </p>
+          <p className="text-sm text-muted-foreground">Page {page} of {totalPages}</p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
               <ChevronLeft className="h-4 w-4" />

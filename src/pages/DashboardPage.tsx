@@ -7,16 +7,10 @@ import {
   ClipboardList,
   AlertTriangle,
   DollarSign,
-  TrendingUp,
 } from "lucide-react";
-import {
-  mockLeads,
-  mockClients,
-  mockTasks,
-  mockTeam,
-  currentUser,
-  leadStatusConfig,
-} from "@/lib/mock-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -33,7 +27,6 @@ import {
   Legend,
 } from "recharts";
 
-// Metric card component
 function MetricCard({
   icon: Icon,
   label,
@@ -52,9 +45,7 @@ function MetricCard({
           <Icon className="h-5 w-5" />
         </div>
         <div>
-          <p className="font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-            {label}
-          </p>
+          <p className="font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
           <p className="font-display text-2xl font-bold text-foreground">{value}</p>
         </div>
       </div>
@@ -62,34 +53,69 @@ function MetricCard({
   );
 }
 
-const CHART_COLORS = ["hsl(217, 91%, 60%)", "hsl(199, 89%, 48%)", "hsl(160, 84%, 39%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(215, 25%, 53%)"];
+const CHART_COLORS = [
+  "hsl(217, 91%, 60%)", "hsl(199, 89%, 48%)", "hsl(160, 84%, 39%)",
+  "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(215, 25%, 53%)",
+];
 
 const DashboardPage = () => {
-  const totalLeads = mockLeads.filter((l) => !l.is_deleted).length;
-  const newThisMonth = mockLeads.filter((l) => l.created_at >= "2026-03-01").length;
-  const leadsWon = mockLeads.filter((l) => l.status === "lead_won").length;
-  const leadsLost = mockLeads.filter((l) => l.status === "lead_lost").length;
-  const activeClients = mockClients.filter((c) => c.status === "active").length;
-  const tasksDueToday = mockTasks.filter((t) => t.deadline.startsWith("2026-03-08") && t.status !== "completed").length;
-  const overdueTasks = mockTasks.filter((t) => t.status === "overdue").length;
-  const revenueThisMonth = mockClients
-    .filter((c) => c.status === "active")
-    .reduce((sum, c) => sum + (c.monthly_payment || 0), 0);
+  const { profile } = useAuth();
 
-  // Lead funnel data
-  const funnelData = Object.entries(leadStatusConfig).map(([key, config]) => ({
-    name: config.label,
-    count: mockLeads.filter((l) => l.status === key).length,
+  const { data: leads = [] } = useQuery({
+    queryKey: ["leads-dashboard"],
+    queryFn: async () => {
+      const { data } = await supabase.from("leads").select("*").eq("is_deleted", false);
+      return data || [];
+    },
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients-dashboard"],
+    queryFn: async () => {
+      const { data } = await supabase.from("clients").select("*");
+      return data || [];
+    },
+  });
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks-dashboard"],
+    queryFn: async () => {
+      const { data } = await supabase.from("tasks").select("*, profiles!tasks_assigned_to_fkey(name)");
+      return data || [];
+    },
+  });
+
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const todayStr = now.toISOString().split("T")[0];
+
+  const totalLeads = leads.length;
+  const newThisMonth = leads.filter((l) => l.created_at && l.created_at >= monthStart).length;
+  const leadsWon = leads.filter((l) => l.status === "lead_won").length;
+  const leadsLost = leads.filter((l) => l.status === "lead_lost").length;
+  const activeClients = clients.filter((c) => c.status === "active").length;
+  const tasksDueToday = tasks.filter((t) => t.deadline?.startsWith(todayStr) && t.status !== "completed").length;
+  const overdueTasks = tasks.filter((t) => t.status === "overdue").length;
+  const revenueThisMonth = clients
+    .filter((c) => c.status === "active")
+    .reduce((sum, c) => sum + (Number(c.monthly_payment) || 0), 0);
+
+  const statusLabels: Record<string, string> = {
+    new_lead: "New Lead", audit_booked: "Audit Booked", audit_done: "Audit Done",
+    in_progress: "In Progress", lead_won: "Lead Won", lead_lost: "Lead Lost",
+  };
+
+  const funnelData = Object.entries(statusLabels).map(([key, name]) => ({
+    name,
+    count: leads.filter((l) => l.status === key).length,
   }));
 
-  // Client status donut
   const clientDonut = [
-    { name: "Active", value: mockClients.filter((c) => c.status === "active").length },
-    { name: "Paused", value: mockClients.filter((c) => c.status === "paused").length },
-    { name: "Completed", value: mockClients.filter((c) => c.status === "completed").length },
+    { name: "Active", value: clients.filter((c) => c.status === "active").length },
+    { name: "Paused", value: clients.filter((c) => c.status === "paused").length },
+    { name: "Completed", value: clients.filter((c) => c.status === "completed").length },
   ];
 
-  // Revenue line chart (mock 6 months)
   const revenueData = [
     { month: "Oct", revenue: 72000 },
     { month: "Nov", revenue: 84000 },
@@ -99,16 +125,6 @@ const DashboardPage = () => {
     { month: "Mar", revenue: revenueThisMonth },
   ];
 
-  // Team task completion
-  const teamTaskData = mockTeam
-    .filter((m) => m.status === "active" && m.role !== "owner")
-    .map((member) => ({
-      name: member.name.split(" ")[0],
-      completed: mockTasks.filter((t) => t.assigned_to === member.id && t.status === "completed").length,
-      in_progress: mockTasks.filter((t) => t.assigned_to === member.id && t.status === "in_progress").length,
-      overdue: mockTasks.filter((t) => t.assigned_to === member.id && t.status === "overdue").length,
-    }));
-
   return (
     <div className="space-y-6">
       <div>
@@ -116,7 +132,6 @@ const DashboardPage = () => {
         <p className="mt-1 text-sm text-muted-foreground">Overview of your agency performance</p>
       </div>
 
-      {/* Metric cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <MetricCard icon={Users} label="Total Leads" value={totalLeads} color="bg-primary/15 text-primary" />
         <MetricCard icon={UserPlus} label="New This Month" value={newThisMonth} color="bg-accent/15 text-accent" />
@@ -125,14 +140,12 @@ const DashboardPage = () => {
         <MetricCard icon={UserCheck} label="Active Clients" value={activeClients} color="bg-success/15 text-success" />
         <MetricCard icon={ClipboardList} label="Due Today" value={tasksDueToday} color="bg-warning/15 text-warning" />
         <MetricCard icon={AlertTriangle} label="Overdue Tasks" value={overdueTasks} color="bg-destructive/15 text-destructive" />
-        {currentUser.role === "owner" && (
+        {profile?.role === "owner" && (
           <MetricCard icon={DollarSign} label="Revenue (Month)" value={`₹${(revenueThisMonth / 1000).toFixed(0)}K`} color="bg-success/15 text-success" />
         )}
       </div>
 
-      {/* Charts row */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Lead Funnel */}
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="mb-4 font-display text-base font-bold text-foreground">Lead Funnel</h3>
           <ResponsiveContainer width="100%" height={220}>
@@ -140,9 +153,7 @@ const DashboardPage = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(213, 50%, 24%)" />
               <XAxis type="number" stroke="hsl(215, 25%, 53%)" fontSize={12} />
               <YAxis dataKey="name" type="category" stroke="hsl(215, 25%, 53%)" fontSize={11} width={100} />
-              <Tooltip
-                contentStyle={{ background: "hsl(218, 49%, 13%)", border: "1px solid hsl(213, 50%, 24%)", borderRadius: 8, color: "hsl(214, 32%, 91%)" }}
-              />
+              <Tooltip contentStyle={{ background: "hsl(218, 49%, 13%)", border: "1px solid hsl(213, 50%, 24%)", borderRadius: 8, color: "hsl(214, 32%, 91%)" }} />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                 {funnelData.map((_, i) => (
                   <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
@@ -152,7 +163,6 @@ const DashboardPage = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Client Status Donut */}
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="mb-4 font-display text-base font-bold text-foreground">Client Status</h3>
           <ResponsiveContainer width="100%" height={220}>
@@ -162,20 +172,14 @@ const DashboardPage = () => {
                   <Cell key={i} fill={[CHART_COLORS[2], CHART_COLORS[3], CHART_COLORS[5]][i]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{ background: "hsl(218, 49%, 13%)", border: "1px solid hsl(213, 50%, 24%)", borderRadius: 8, color: "hsl(214, 32%, 91%)" }}
-              />
-              <Legend
-                iconType="circle"
-                wrapperStyle={{ fontSize: 12, color: "hsl(215, 25%, 53%)" }}
-              />
+              <Tooltip contentStyle={{ background: "hsl(218, 49%, 13%)", border: "1px solid hsl(213, 50%, 24%)", borderRadius: 8, color: "hsl(214, 32%, 91%)" }} />
+              <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Revenue chart (Owner only) */}
-      {currentUser.role === "owner" && (
+      {profile?.role === "owner" && (
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="mb-4 font-display text-base font-bold text-foreground">Monthly Revenue</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -192,25 +196,6 @@ const DashboardPage = () => {
           </ResponsiveContainer>
         </div>
       )}
-
-      {/* Team task completion */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h3 className="mb-4 font-display text-base font-bold text-foreground">Team Task Completion</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={teamTaskData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(213, 50%, 24%)" />
-            <XAxis dataKey="name" stroke="hsl(215, 25%, 53%)" fontSize={12} />
-            <YAxis stroke="hsl(215, 25%, 53%)" fontSize={12} />
-            <Tooltip
-              contentStyle={{ background: "hsl(218, 49%, 13%)", border: "1px solid hsl(213, 50%, 24%)", borderRadius: 8, color: "hsl(214, 32%, 91%)" }}
-            />
-            <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="completed" fill="hsl(160, 84%, 39%)" stackId="a" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="in_progress" fill="hsl(217, 91%, 60%)" stackId="a" />
-            <Bar dataKey="overdue" fill="hsl(0, 84%, 60%)" stackId="a" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
     </div>
   );
 };

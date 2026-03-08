@@ -1,7 +1,7 @@
 import { Bell, LogOut, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { currentUser } from "@/lib/mock-data";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const roleBadgeVariant: Record<string, string> = {
   owner: "bg-destructive/20 text-destructive",
@@ -10,6 +10,14 @@ const roleBadgeVariant: Record<string, string> = {
 };
 
 export function TopNav() {
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
+
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-6">
       {/* Search */}
@@ -30,17 +38,20 @@ export function TopNav() {
 
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 font-display text-sm font-bold text-primary">
-            {currentUser.name.charAt(0)}
+            {profile?.name?.charAt(0) || "?"}
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-medium leading-none text-foreground">{currentUser.name}</p>
-            <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ${roleBadgeVariant[currentUser.role]}`}>
-              {currentUser.role}
+            <p className="text-sm font-medium leading-none text-foreground">{profile?.name || "User"}</p>
+            <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ${roleBadgeVariant[profile?.role || "team"]}`}>
+              {profile?.role || "team"}
             </span>
           </div>
         </div>
 
-        <button className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+        <button
+          onClick={handleSignOut}
+          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
           <LogOut className="h-5 w-5" />
         </button>
       </div>

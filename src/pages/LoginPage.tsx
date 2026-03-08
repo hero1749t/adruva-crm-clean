@@ -3,6 +3,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -11,31 +12,34 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { signIn, user } = useAuth();
+
+  // Redirect if already logged in
+  if (user) {
+    navigate("/dashboard", { replace: true });
+    return null;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Mock login — replace with Supabase auth later
-    setTimeout(() => {
-      if (email && password) {
-        navigate("/dashboard");
-      } else {
-        setError("Please enter valid credentials");
-      }
-      setLoading(false);
-    }, 1000);
+    const { error: signInError } = await signIn(email, password);
+    if (signInError) {
+      setError(signInError);
+    } else {
+      navigate("/dashboard");
+    }
+    setLoading(false);
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      {/* Glow effect */}
       <div className="pointer-events-none fixed -top-48 right-0 h-[600px] w-[600px] rounded-full bg-primary/5 blur-3xl" />
 
       <div className="w-full max-w-md animate-fade-in px-4">
         <div className="rounded-xl border border-border bg-card p-8 shadow-2xl">
-          {/* Logo */}
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary font-display text-xl font-bold text-primary-foreground">
               A
