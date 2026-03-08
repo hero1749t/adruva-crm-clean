@@ -19,6 +19,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import LogsPage from "@/pages/LogsPage";
 import InvoicesPage from "@/pages/InvoicesPage";
 import ReportsPage from "@/pages/ReportsPage";
+import RolesPage from "@/pages/RolesPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
