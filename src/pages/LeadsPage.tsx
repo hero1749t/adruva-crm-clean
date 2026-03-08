@@ -43,6 +43,7 @@ const leadStatusConfig: Record<string, { label: string; color: string }> = {
 const LeadsPage = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [assignedFilter, setAssignedFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -61,7 +62,7 @@ const LeadsPage = () => {
   const isOwner = profile?.role === "owner";
 
   const { data: leads = [], isLoading } = useQuery({
-    queryKey: ["leads", statusFilter, search],
+    queryKey: ["leads", statusFilter, search, assignedFilter],
     queryFn: async () => {
       let query = supabase
         .from("leads")
@@ -71,6 +72,13 @@ const LeadsPage = () => {
 
       if (statusFilter !== "all") {
         query = query.eq("status", statusFilter as any);
+      }
+      if (assignedFilter !== "all") {
+        if (assignedFilter === "unassigned") {
+          query = query.is("assigned_to", null);
+        } else {
+          query = query.eq("assigned_to", assignedFilter);
+        }
       }
       if (search) {
         query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,company_name.ilike.%${search}%`);
@@ -304,6 +312,18 @@ const LeadsPage = () => {
             <SelectItem value="all">All Status</SelectItem>
             {Object.entries(leadStatusConfig).map(([key, config]) => (
               <SelectItem key={key} value={key}>{config.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={assignedFilter} onValueChange={(v) => { setAssignedFilter(v); setPage(1); }}>
+          <SelectTrigger className="h-9 w-44 border-border bg-muted/30 text-sm">
+            <SelectValue placeholder="All Assigned" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Assigned</SelectItem>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+            {teamMembers.map((m) => (
+              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
