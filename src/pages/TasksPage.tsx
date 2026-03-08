@@ -403,9 +403,11 @@ const TasksPage = () => {
                         onValueChange={(v) => {
                           const updates: any = { status: v };
                           if (v === "completed") updates.completed_at = new Date().toISOString();
+                          const oldStatus = task.status || "pending";
                           supabase.from("tasks").update(updates).eq("id", task.id).then(() => {
                             queryClient.invalidateQueries({ queryKey: ["tasks"] });
-                            logActivity({ entity: "task", entityId: task.id, action: "status_changed", metadata: { title: task.task_title, from: task.status, to: v } });
+                            logActivity({ entity: "task", entityId: task.id, action: "status_changed", metadata: { title: task.task_title, from: oldStatus, to: v } });
+                            sendStatusEmail({ entity: "task", entityName: task.task_title, oldStatus, newStatus: v, assignedTo: task.assigned_to });
                           });
                         }}
                       >

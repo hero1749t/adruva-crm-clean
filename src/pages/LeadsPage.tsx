@@ -438,9 +438,11 @@ const LeadsPage = () => {
                         <Select
                           value={lead.status}
                           onValueChange={(v) => {
+                            const oldStatus = lead.status;
                             supabase.from("leads").update({ status: v as any }).eq("id", lead.id).then(() => {
                               queryClient.invalidateQueries({ queryKey: ["leads"] });
-                              logActivity({ entity: "lead", entityId: lead.id, action: "status_changed", metadata: { name: lead.name, from: lead.status, to: v } });
+                              logActivity({ entity: "lead", entityId: lead.id, action: "status_changed", metadata: { name: lead.name, from: oldStatus, to: v } });
+                              sendStatusEmail({ entity: "lead", entityName: lead.name, oldStatus, newStatus: v, assignedTo: lead.assigned_to });
                             });
                           }}
                         >
