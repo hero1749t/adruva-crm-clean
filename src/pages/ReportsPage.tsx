@@ -107,23 +107,27 @@ const ReportsPage = () => {
 
   const isLoading = invLoading || taskLoading;
 
+  /* ── filtered data ── */
+  const filteredInvoices = useMemo(() => invoices.filter((i) => inRange(i.created_at)), [invoices, startDate, endDate]);
+  const filteredTasks = useMemo(() => tasks.filter((t) => inRange(t.created_at)), [tasks, startDate, endDate]);
+
   /* ── computed metrics ── */
   const metrics = useMemo(() => {
-    const totalRevenue = invoices
+    const totalRevenue = filteredInvoices
       .filter((i) => i.status === "paid")
       .reduce((s, i) => s + (i.total_amount || 0), 0);
-    const outstanding = invoices
+    const outstanding = filteredInvoices
       .filter((i) => i.status === "sent" || i.status === "overdue")
       .reduce((s, i) => s + (i.total_amount || 0), 0);
-    const totalInvoices = invoices.length;
-    const paidInvoices = invoices.filter((i) => i.status === "paid").length;
+    const totalInvoices = filteredInvoices.length;
+    const paidInvoices = filteredInvoices.filter((i) => i.status === "paid").length;
     const collectionRate = totalInvoices > 0 ? Math.round((paidInvoices / totalInvoices) * 100) : 0;
     const activeClients = clients.filter((c) => c.status === "active").length;
-    const completedTasks = tasks.filter((t) => t.status === "completed").length;
-    const totalTasks = tasks.length;
+    const completedTasks = filteredTasks.filter((t) => t.status === "completed").length;
+    const totalTasks = filteredTasks.length;
 
     return { totalRevenue, outstanding, collectionRate, activeClients, completedTasks, totalTasks };
-  }, [invoices, clients, tasks]);
+  }, [filteredInvoices, clients, filteredTasks]);
 
   /* ── monthly revenue trend ── */
   const monthlyRevenue = useMemo(() => {
