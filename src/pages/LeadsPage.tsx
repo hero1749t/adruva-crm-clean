@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLog";
+import { sendStatusEmail } from "@/lib/send-status-email";
 import NewLeadDrawer from "@/components/NewLeadDrawer";
 import ImportLeadsDialog from "@/components/ImportLeadsDialog";
 import { exportLeadsCsv } from "@/lib/csv-utils";
@@ -437,9 +438,11 @@ const LeadsPage = () => {
                         <Select
                           value={lead.status}
                           onValueChange={(v) => {
+                            const oldStatus = lead.status;
                             supabase.from("leads").update({ status: v as any }).eq("id", lead.id).then(() => {
                               queryClient.invalidateQueries({ queryKey: ["leads"] });
-                              logActivity({ entity: "lead", entityId: lead.id, action: "status_changed", metadata: { name: lead.name, from: lead.status, to: v } });
+                              logActivity({ entity: "lead", entityId: lead.id, action: "status_changed", metadata: { name: lead.name, from: oldStatus, to: v } });
+                              sendStatusEmail({ entity: "lead", entityName: lead.name, oldStatus, newStatus: v, assignedTo: lead.assigned_to });
                             });
                           }}
                         >
