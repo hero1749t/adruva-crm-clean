@@ -93,7 +93,9 @@ const TasksPage = () => {
     },
   });
 
-  const allSelected = tasks.length > 0 && tasks.every((t) => selected.has(t.id));
+  const totalPages = Math.ceil(tasks.length / perPage);
+  const paged = tasks.slice((page - 1) * perPage, page * perPage);
+  const allSelected = paged.length > 0 && paged.every((t) => selected.has(t.id));
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -108,7 +110,7 @@ const TasksPage = () => {
     if (allSelected) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(tasks.map((t) => t.id)));
+      setSelected(new Set(paged.map((t) => t.id)));
     }
   };
 
