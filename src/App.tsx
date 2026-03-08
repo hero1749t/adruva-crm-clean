@@ -12,6 +12,7 @@ import LeadDetailPage from "@/pages/LeadDetailPage";
 import ClientsPage from "@/pages/ClientsPage";
 import ClientDetailPage from "@/pages/ClientDetailPage";
 import TasksPage from "@/pages/TasksPage";
+import CalendarPage from "@/pages/CalendarPage";
 import TeamPage from "@/pages/TeamPage";
 import NotFound from "@/pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="clients" element={<ClientsPage />} />
               <Route path="clients/:id" element={<ClientDetailPage />} />
               <Route path="tasks" element={<TasksPage />} />
+              <Route path="calendar" element={<CalendarPage />} />
               <Route path="team" element={<TeamPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
