@@ -286,6 +286,14 @@ const CalendarPage = () => {
           })}
         </div>
       </div>
+
+      {newTaskDate && (
+        <NewTaskDialog
+          open={!!newTaskDate}
+          onOpenChange={(open) => !open && setNewTaskDate(null)}
+          defaultDate={newTaskDate}
+        />
+      )}
     </div>
   );
 };
