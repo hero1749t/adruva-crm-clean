@@ -36,6 +36,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (data && !error) {
+        if (data.status === "inactive") {
+          await supabase.auth.signOut();
+          setUser(null);
+          setProfile(null);
+          return;
+        }
         setProfile({ ...data, email, role: data.role as UserRole });
       }
     } catch {
