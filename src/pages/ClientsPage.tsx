@@ -56,6 +56,21 @@ const ClientsPage = () => {
   const startItem = totalCount === 0 ? 0 : (page - 1) * perPage + 1;
   const endItem = Math.min(page * perPage, totalCount);
 
+  const clientIds = clients.map((c) => c.id);
+  const { data: healthScores } = useClientHealthScores(clientIds);
+
+  // Filter by health
+  const filteredClients = healthFilter === "all"
+    ? clients
+    : clients.filter((c) => {
+        const h = healthScores?.[c.id];
+        if (!h) return false;
+        if (healthFilter === "critical") return h.label === "Critical";
+        if (healthFilter === "at_risk") return h.label === "At Risk";
+        if (healthFilter === "healthy") return h.label === "Healthy";
+        return true;
+      });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
