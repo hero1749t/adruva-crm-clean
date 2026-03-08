@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import { LeadConversionFunnel } from "@/components/reports/LeadConversionFunnel";
 import { MrrBreakdownChart } from "@/components/reports/MrrBreakdownChart";
+import { LeadSourceChart } from "@/components/reports/LeadSourceChart";
 
 /* ── palette ── */
 const COLORS = {
