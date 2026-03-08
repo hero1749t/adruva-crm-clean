@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logActivity } from "@/hooks/useActivityLog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,7 +70,7 @@ const NewTaskDialog = ({ open, onOpenChange, defaultDate }: NewTaskDialogProps) 
 
   const createTask = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("tasks").insert({
+      const { data, error } = await supabase.from("tasks").insert({
         task_title: title,
         client_id: clientId,
         priority,
@@ -77,10 +78,12 @@ const NewTaskDialog = ({ open, onOpenChange, defaultDate }: NewTaskDialogProps) 
         assigned_to: assignedTo || null,
         notes: notes || null,
         status: "pending",
-      });
+      }).select("id").single();
       if (error) throw error;
+      return { id: data.id };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      logActivity({ entity: "task", entityId: result.id, action: "created", metadata: { name: title } });
       toast({ title: "Task created", description: `"${title}" added for ${format(defaultDate, "MMM d, yyyy")}` });
       queryClient.invalidateQueries({ queryKey: ["calendar-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });

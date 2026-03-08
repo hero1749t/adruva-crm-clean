@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logActivity } from "@/hooks/useActivityLog";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,6 +104,7 @@ const ClientDetailPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      logActivity({ entity: "client", entityId: id!, action: "updated", metadata: { name: client?.client_name } });
       queryClient.invalidateQueries({ queryKey: ["client", id] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       toast({ title: "Client updated" });
