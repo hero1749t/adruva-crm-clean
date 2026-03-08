@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import LeadsPage from "@/pages/LeadsPage";
+import LeadDetailPage from "@/pages/LeadDetailPage";
 import ClientsPage from "@/pages/ClientsPage";
 import TasksPage from "@/pages/TasksPage";
 import TeamPage from "@/pages/TeamPage";
@@ -28,6 +29,7 @@ const App = () => (
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="leads" element={<LeadsPage />} />
+              <Route path="leads/:id" element={<LeadDetailPage />} />
               <Route path="clients" element={<ClientsPage />} />
               <Route path="tasks" element={<TasksPage />} />
               <Route path="team" element={<TeamPage />} />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Plus, Download, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const LeadsPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const perPage = 20;
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
 
@@ -134,7 +136,7 @@ const LeadsPage = () => {
                 const statusConf = leadStatusConfig[lead.status] || leadStatusConfig.new_lead;
                 const assignedName = (lead as any).profiles?.name || "Unassigned";
                 return (
-                  <tr key={lead.id} className="border-b border-border/50 transition-colors hover:bg-primary/[0.03] cursor-pointer">
+                  <tr key={lead.id} className="border-b border-border/50 transition-colors hover:bg-primary/[0.03] cursor-pointer" onClick={() => navigate(`/leads/${lead.id}`)}>
                     <td className="px-4 py-3 font-medium text-foreground">{lead.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{lead.company_name || "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{lead.phone}</td>
