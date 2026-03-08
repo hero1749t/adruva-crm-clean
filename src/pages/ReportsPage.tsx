@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import { LeadConversionFunnel } from "@/components/reports/LeadConversionFunnel";
 import { MrrBreakdownChart } from "@/components/reports/MrrBreakdownChart";
+import { LeadSourceChart } from "@/components/reports/LeadSourceChart";
 
 /* ── palette ── */
 const COLORS = {
@@ -113,7 +114,7 @@ const ReportsPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("leads")
-        .select("id, status, created_at")
+        .select("id, status, source, created_at")
         .eq("is_deleted", false);
       return data || [];
     },
@@ -236,6 +237,18 @@ const ReportsPage = () => {
     const counts: Record<string, number> = {};
     filteredLeads.forEach((l) => { counts[l.status] = (counts[l.status] || 0) + 1; });
     return stages.map((s) => ({ name: s.label, value: counts[s.key] || 0 }));
+  }, [filteredLeads]);
+
+  /* ── lead source breakdown ── */
+  const leadSourceData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredLeads.forEach((l) => {
+      const src = (l as any).source || "Unknown";
+      counts[src] = (counts[src] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
   }, [filteredLeads]);
 
   /* ── MRR breakdown ── */
@@ -567,11 +580,14 @@ const ReportsPage = () => {
         )}
       </div>
 
-      {/* Row 4: Lead Funnel + MRR */}
+      {/* Row 4: Lead Funnel + Lead Sources */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <LeadConversionFunnel data={leadFunnelData} />
-        <MrrBreakdownChart data={mrrData} />
+        <LeadSourceChart data={leadSourceData} />
       </div>
+
+      {/* Row 5: MRR */}
+      <MrrBreakdownChart data={mrrData} />
     </div>
   );
 };
