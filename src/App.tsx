@@ -12,6 +12,7 @@ import LeadDetailPage from "@/pages/LeadDetailPage";
 import ClientsPage from "@/pages/ClientsPage";
 import ClientDetailPage from "@/pages/ClientDetailPage";
 import TasksPage from "@/pages/TasksPage";
+import CalendarPage from "@/pages/CalendarPage";
 import TeamPage from "@/pages/TeamPage";
 import NotFound from "@/pages/NotFound";
 
