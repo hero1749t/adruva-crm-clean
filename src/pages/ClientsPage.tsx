@@ -1,27 +1,45 @@
-import { mockClients, clientStatusConfig, currentUser } from "@/lib/mock-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { Download, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
+const clientStatusConfig: Record<string, { label: string; color: string }> = {
+  active: { label: "Active", color: "bg-success/20 text-success" },
+  paused: { label: "Paused", color: "bg-warning/20 text-warning" },
+  completed: { label: "Completed", color: "bg-muted text-muted-foreground" },
+};
+
 const ClientsPage = () => {
   const [search, setSearch] = useState("");
-  const isOwnerOrAdmin = currentUser.role === "owner" || currentUser.role === "admin";
+  const { profile } = useAuth();
+  const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
 
-  const filtered = mockClients.filter(
-    (c) =>
-      !search ||
-      c.client_name.toLowerCase().includes(search.toLowerCase()) ||
-      c.company_name?.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const { data: clients = [], isLoading } = useQuery({
+    queryKey: ["clients", search],
+    queryFn: async () => {
+      let query = supabase
+        .from("clients")
+        .select("*, profiles!clients_assigned_manager_fkey(name)")
+        .order("created_at", { ascending: false });
+
+      if (search) {
+        query = query.or(`client_name.ilike.%${search}%,company_name.ilike.%${search}%,email.ilike.%${search}%`);
+      }
+
+      const { data } = await query;
+      return data || [];
+    },
+  });
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Clients</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{filtered.length} clients</p>
+          <p className="mt-1 text-sm text-muted-foreground">{clients.length} clients</p>
         </div>
         {isOwnerOrAdmin && (
           <Button variant="outline" size="sm" className="gap-2">
@@ -56,30 +74,45 @@ const ClientsPage = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((client) => {
-              const statusConf = clientStatusConfig[client.status];
-              return (
-                <tr key={client.id} className="border-b border-border/50 transition-colors hover:bg-primary/[0.03] cursor-pointer">
-                  <td className="px-4 py-3 font-medium text-foreground">{client.client_name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{client.company_name || "—"}</td>
-                  <td className="px-4 py-3">
-                    <span className="rounded bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
-                      {client.plan?.replace("_", " ") || "—"}
-                    </span>
-                  </td>
-                  {isOwnerOrAdmin && (
-                    <td className="px-4 py-3 text-muted-foreground">₹{client.monthly_payment?.toLocaleString() || "—"}</td>
-                  )}
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
-                      {statusConf.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{client.assigned_manager_name || "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{client.start_date ? new Date(client.start_date).toLocaleDateString() : "—"}</td>
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <tr key={i} className="border-b border-border/50">
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <td key={j} className="px-4 py-3"><div className="h-4 w-24 animate-pulse rounded bg-muted" /></td>
+                  ))}
                 </tr>
-              );
-            })}
+              ))
+            ) : clients.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">No clients yet</td>
+              </tr>
+            ) : (
+              clients.map((client) => {
+                const statusConf = clientStatusConfig[client.status || "active"];
+                const managerName = (client as any).profiles?.name || "—";
+                return (
+                  <tr key={client.id} className="border-b border-border/50 transition-colors hover:bg-primary/[0.03] cursor-pointer">
+                    <td className="px-4 py-3 font-medium text-foreground">{client.client_name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{client.company_name || "—"}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
+                        {client.plan?.replace("_", " ") || "—"}
+                      </span>
+                    </td>
+                    {isOwnerOrAdmin && (
+                      <td className="px-4 py-3 text-muted-foreground">₹{Number(client.monthly_payment)?.toLocaleString() || "—"}</td>
+                    )}
+                    <td className="px-4 py-3">
+                      <span className={`inline-block rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
+                        {statusConf.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{managerName}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{client.start_date ? new Date(client.start_date).toLocaleDateString() : "—"}</td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

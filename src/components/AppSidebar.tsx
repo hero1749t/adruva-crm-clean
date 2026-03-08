@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
-import { currentUser } from "@/lib/mock-data";
+import { useAuth } from "@/contexts/AuthContext";
 
 type NavItem = {
   icon: React.ElementType;
@@ -36,6 +36,8 @@ const navItems: NavItem[] = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { profile } = useAuth();
+  const userRole = profile?.role || "team";
 
   return (
     <aside
@@ -59,7 +61,7 @@ export function AppSidebar() {
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-2 py-4">
         {navItems
-          .filter((item) => !item.roles || item.roles.includes(currentUser.role))
+          .filter((item) => !item.roles || item.roles.includes(userRole))
           .map((item) => {
             const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + "/");
             return (
