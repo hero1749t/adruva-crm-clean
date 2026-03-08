@@ -222,6 +222,55 @@ const ReportsPage = () => {
       .map(([month, count]) => ({ label: monthLabel(month), clients: count }));
   }, [filteredClients]);
 
+  /* ── lead conversion funnel ── */
+  const filteredLeads = useMemo(() => leads.filter((l) => inRange(l.created_at)), [leads, startDate, endDate]);
+  const leadFunnelData = useMemo(() => {
+    const stages = [
+      { key: "new_lead", label: "New Lead" },
+      { key: "audit_booked", label: "Audit Booked" },
+      { key: "audit_done", label: "Audit Done" },
+      { key: "in_progress", label: "In Progress" },
+      { key: "lead_won", label: "Won" },
+      { key: "lead_lost", label: "Lost" },
+    ];
+    const counts: Record<string, number> = {};
+    filteredLeads.forEach((l) => { counts[l.status] = (counts[l.status] || 0) + 1; });
+    return stages.map((s) => ({ name: s.label, value: counts[s.key] || 0 }));
+  }, [filteredLeads]);
+
+  /* ── MRR breakdown ── */
+  const mrrData = useMemo(() => {
+    // Build monthly MRR from active clients with monthly_payment
+    const activeWithPayment = clients.filter((c) => c.status === "active" && c.monthly_payment && c.start_date);
+    const months: Record<string, { mrr: number; clients: number }> = {};
+
+    // Generate months within range
+    const now = new Date();
+    const rangeStart = startDate || new Date(Math.min(...activeWithPayment.map((c) => new Date(c.start_date!).getTime()), now.getTime()));
+    const rangeEnd = endDate || now;
+
+    let cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
+    while (cursor <= rangeEnd) {
+      const key = cursor.toISOString().slice(0, 7);
+      let mrr = 0;
+      let count = 0;
+      activeWithPayment.forEach((c) => {
+        const cStart = new Date(c.start_date!);
+        if (cStart <= new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0)) {
+          mrr += c.monthly_payment!;
+          count++;
+        }
+      });
+      months[key] = { mrr, clients: count };
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    }
+
+    return Object.entries(months)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([month, d]) => ({ label: monthLabel(month), ...d }));
+  }, [clients, startDate, endDate]);
+
   const customTooltipStyle = {
     backgroundColor: "hsl(218, 49%, 13%)",
     border: "1px solid hsl(213, 50%, 24%)",
