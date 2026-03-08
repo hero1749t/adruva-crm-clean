@@ -15,12 +15,17 @@ import {
   subMonths,
   addWeeks,
   subWeeks,
+  addDays,
+  subDays,
   startOfMonth,
   endOfMonth,
   startOfWeek,
   endOfWeek,
+  startOfDay,
+  endOfDay,
   format,
   isSameMonth,
+  isSameDay,
   parseISO,
 } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,8 +37,9 @@ import NewTaskDialog from "@/components/NewTaskDialog";
 import { priorityConfig, type CalendarTask } from "@/components/calendar/calendar-config";
 import MonthView from "@/components/calendar/MonthView";
 import WeekView from "@/components/calendar/WeekView";
+import DayView from "@/components/calendar/DayView";
 
-type ViewMode = "month" | "week";
+type ViewMode = "month" | "week" | "day";
 
 const CalendarPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -45,12 +51,10 @@ const CalendarPage = () => {
   const queryClient = useQueryClient();
   const canCreate = profile?.role === "owner" || profile?.role === "admin";
 
-  // DnD sensors — require 5px movement before drag starts to allow clicks
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  // Compute query range based on view
   const queryRange = useMemo(() => {
     if (viewMode === "month") {
       return {
@@ -58,9 +62,15 @@ const CalendarPage = () => {
         end: endOfWeek(endOfMonth(currentDate)),
       };
     }
+    if (viewMode === "week") {
+      return {
+        start: startOfWeek(currentDate),
+        end: endOfWeek(currentDate),
+      };
+    }
     return {
-      start: startOfWeek(currentDate),
-      end: endOfWeek(currentDate),
+      start: startOfDay(currentDate),
+      end: endOfDay(currentDate),
     };
   }, [currentDate, viewMode]);
 
@@ -87,7 +97,6 @@ const CalendarPage = () => {
     return map;
   }, [tasks]);
 
-  // Reschedule mutation
   const reschedule = useMutation({
     mutationFn: async ({ taskId, newDate }: { taskId: string; newDate: Date }) => {
       const { error } = await supabase
@@ -99,7 +108,7 @@ const CalendarPage = () => {
     onSuccess: (_, { newDate }) => {
       toast({
         title: "Task rescheduled",
-        description: `Moved to ${format(newDate, "MMM d, yyyy")}`,
+        description: `Moved to ${format(newDate, "MMM d, yyyy h:mm a")}`,
       });
       queryClient.invalidateQueries({ queryKey: ["calendar-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -123,36 +132,65 @@ const CalendarPage = () => {
       const newDate = over.data.current?.date as Date | undefined;
       if (!newDate) return;
 
-      const oldKey = format(parseISO(task.deadline), "yyyy-MM-dd");
-      const newKey = format(newDate, "yyyy-MM-dd");
-      if (oldKey === newKey) return;
+      const oldDeadline = parseISO(task.deadline);
+      if (isSameDay(oldDeadline, newDate) && oldDeadline.getHours() === newDate.getHours() && viewMode === "day") return;
+      if (viewMode !== "day" && format(oldDeadline, "yyyy-MM-dd") === format(newDate, "yyyy-MM-dd")) return;
 
       reschedule.mutate({ taskId: task.id, newDate });
     },
-    [reschedule]
+    [reschedule, viewMode]
   );
 
+  // Handle day click from month/week to switch to day view
+  const handleDayClick = useCallback(
+    (day: Date) => {
+      if (viewMode === "month" || viewMode === "week") {
+        // Double-click detection: if same day clicked, switch to day view
+        // Single click: open new task dialog
+        setNewTaskDate(day);
+      } else {
+        setNewTaskDate(day);
+      }
+    },
+    [viewMode]
+  );
+
+  const openDayView = useCallback((day: Date) => {
+    setCurrentDate(day);
+    setViewMode("day");
+  }, []);
+
   // Stats
-  const visibleTasks =
-    viewMode === "month"
-      ? tasks.filter((t) => isSameMonth(parseISO(t.deadline), currentDate))
-      : tasks;
+  const visibleTasks = useMemo(() => {
+    if (viewMode === "month") return tasks.filter((t) => isSameMonth(parseISO(t.deadline), currentDate));
+    return tasks;
+  }, [tasks, viewMode, currentDate]);
+
   const completedCount = visibleTasks.filter((t) => t.status === "completed").length;
   const overdueCount = visibleTasks.filter((t) => t.status === "overdue").length;
 
   // Navigation
-  const goBack = () =>
-    setCurrentDate(viewMode === "month" ? subMonths(currentDate, 1) : subWeeks(currentDate, 1));
-  const goForward = () =>
-    setCurrentDate(viewMode === "month" ? addMonths(currentDate, 1) : addWeeks(currentDate, 1));
+  const goBack = () => {
+    if (viewMode === "month") setCurrentDate(subMonths(currentDate, 1));
+    else if (viewMode === "week") setCurrentDate(subWeeks(currentDate, 1));
+    else setCurrentDate(subDays(currentDate, 1));
+  };
+  const goForward = () => {
+    if (viewMode === "month") setCurrentDate(addMonths(currentDate, 1));
+    else if (viewMode === "week") setCurrentDate(addWeeks(currentDate, 1));
+    else setCurrentDate(addDays(currentDate, 1));
+  };
   const goToday = () => setCurrentDate(new Date());
 
-  const headerLabel =
-    viewMode === "month"
-      ? format(currentDate, "MMMM yyyy")
-      : `${format(startOfWeek(currentDate), "MMM d")} – ${format(endOfWeek(currentDate), "MMM d, yyyy")}`;
+  const headerLabel = useMemo(() => {
+    if (viewMode === "month") return format(currentDate, "MMMM yyyy");
+    if (viewMode === "week")
+      return `${format(startOfWeek(currentDate), "MMM d")} – ${format(endOfWeek(currentDate), "MMM d, yyyy")}`;
+    return format(currentDate, "EEEE, MMMM d, yyyy");
+  }, [viewMode, currentDate]);
 
-  const statsLabel = viewMode === "month" ? "this month" : "this week";
+  const statsLabel =
+    viewMode === "month" ? "this month" : viewMode === "week" ? "this week" : "today";
 
   return (
     <div className="space-y-6">
@@ -163,33 +201,25 @@ const CalendarPage = () => {
             Calendar
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {visibleTasks.length} tasks {statsLabel} · {completedCount} done · {overdueCount} overdue
+            {visibleTasks.length} task{visibleTasks.length !== 1 ? "s" : ""} {statsLabel} · {completedCount} done · {overdueCount} overdue
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border bg-surface p-0.5">
-            <button
-              onClick={() => setViewMode("month")}
-              className={cn(
-                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
-                viewMode === "month"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => setViewMode("week")}
-              className={cn(
-                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
-                viewMode === "week"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Week
-            </button>
+            {(["month", "week", "day"] as ViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  "rounded-md px-3 py-1 text-xs font-medium capitalize transition-colors",
+                  viewMode === mode
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {mode}
+              </button>
+            ))}
           </div>
 
           <Button variant="outline" size="sm" onClick={goToday}>
@@ -221,21 +251,33 @@ const CalendarPage = () => {
 
       {/* Views with DnD */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        {viewMode === "month" ? (
+        {viewMode === "month" && (
           <MonthView
             currentMonth={currentDate}
             tasksByDate={tasksByDate}
             canCreate={canCreate}
             canDrag={canCreate}
-            onDayClick={setNewTaskDate}
+            onDayClick={handleDayClick}
+            onDayDoubleClick={openDayView}
           />
-        ) : (
+        )}
+        {viewMode === "week" && (
           <WeekView
             currentWeekDate={currentDate}
             tasksByDate={tasksByDate}
             canCreate={canCreate}
             canDrag={canCreate}
-            onDayClick={setNewTaskDate}
+            onDayClick={handleDayClick}
+            onDayDoubleClick={openDayView}
+          />
+        )}
+        {viewMode === "day" && (
+          <DayView
+            currentDay={currentDate}
+            tasks={tasks}
+            canCreate={canCreate}
+            canDrag={canCreate}
+            onHourClick={setNewTaskDate}
           />
         )}
 
