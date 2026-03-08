@@ -40,6 +40,8 @@ import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 import { OnboardingTemplatesSection } from "@/components/OnboardingChecklist";
 import { WeeklyReportPreviewButton } from "@/components/WeeklyReportPreview";
+import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
+import { ServiceTemplatesSettings } from "@/components/settings/ServiceTemplatesSettings";
 
 type TaskPriority = Database["public"]["Enums"]["task_priority"];
 
@@ -1043,6 +1045,12 @@ const SettingsPage = () => {
 
       {/* Onboarding Checklist Templates */}
       <OnboardingTemplatesSection />
+
+      {/* Service Templates */}
+      <ServiceTemplatesSettings />
+
+      {/* Integrations */}
+      <IntegrationsSettings />
 
       {/* Recurring Tasks Section */}
       <RecurringTasksSection />
