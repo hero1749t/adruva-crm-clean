@@ -269,12 +269,12 @@ const LeadsPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Leads</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{totalCount} total leads</p>
-        </div>
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Leads</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{totalCount} total leads</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+            {isOwnerOrAdmin ? "Leads" : "My Leads"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {totalCount} {isOwnerOrAdmin ? "total" : "assigned"} lead{totalCount !== 1 ? "s" : ""}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border bg-muted/30 p-0.5">

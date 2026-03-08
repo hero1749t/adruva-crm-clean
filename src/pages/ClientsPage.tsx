@@ -75,8 +75,12 @@ const ClientsPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Clients</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{totalCount} clients</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+            {isOwnerOrAdmin ? "Clients" : "My Clients"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {totalCount} {isOwnerOrAdmin ? "" : "assigned "}client{totalCount !== 1 ? "s" : ""}
+          </p>
         </div>
         {isOwnerOrAdmin && (
           <Button variant="outline" size="sm" className="gap-2">
