@@ -187,7 +187,7 @@ const PreviewContent = ({ profileName, profileId }: { profileName: string; profi
           {/* Body */}
           <div className="p-8" style={{ background: "#0f172a", border: "1px solid #1e3a5f", borderTop: "none", borderBottom: "none" }}>
             <p className="text-[15px] mb-7" style={{ color: "#94a3b8" }}>
-              Hi <strong style={{ color: "#f1f5f9" }}>{profileName}</strong>, here's your performance snapshot for the week.
+              Hi <strong style={{ color: "#f1f5f9" }}>{displayName}</strong>, here's your performance snapshot for the week.
             </p>
 
             {/* Primary KPIs */}
