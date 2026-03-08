@@ -50,13 +50,19 @@ const TeamPage = () => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { can } = usePermissions();
+  const { data: customRoles = [] } = useCustomRoles();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "team" });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "team", customRoleId: "" });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [roleEditId, setRoleEditId] = useState<string | null>(null);
   const [roleEditValue, setRoleEditValue] = useState<string>("");
 
-  if (profile && profile.role !== "owner") {
+  const canInvite = can("team", "invite");
+  const canManage = can("team", "manage");
+
+  // Only owners and admins with invite permission can view team page
+  if (profile && !canInvite && !canManage && profile.role !== "owner") {
     return <Navigate to="/dashboard" replace />;
   }
 
