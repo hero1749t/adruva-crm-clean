@@ -16,6 +16,7 @@ import {
 import { SparklineMetricCard } from "@/components/dashboard/SparklineMetricCard";
 import { DateRangeToggle, type DateRange } from "@/components/dashboard/DateRangeToggle";
 import { LiveActivityFeed } from "@/components/dashboard/LiveActivityFeed";
+import { TeamLeaderboard } from "@/components/dashboard/TeamLeaderboard";
 
 const CHART_COLORS = [
   "hsl(217, 91%, 60%)", "hsl(199, 89%, 48%)", "hsl(160, 84%, 39%)",
@@ -438,8 +439,11 @@ const DashboardPage = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Live Activity Feed */}
-      <LiveActivityFeed />
+      {/* Team Leaderboard & Live Activity Feed */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <TeamLeaderboard tasks={tasks} />
+        <LiveActivityFeed />
+      </div>
 
       {/* Revenue Chart (owner only) */}
       {profile?.role === "owner" && (
