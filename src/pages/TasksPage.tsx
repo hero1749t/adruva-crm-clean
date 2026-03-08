@@ -343,6 +343,7 @@ const TasksPage = () => {
                       isOverdue && "border-l-2 border-l-destructive",
                       isSelected ? "bg-primary/[0.06]" : "hover:bg-primary/[0.03]"
                     )}
+                    onClick={() => setDetailTask(task)}
                   >
                     {isOwnerOrAdmin && (
                       <td className="w-10 px-3 py-3" onClick={(e) => e.stopPropagation()}>
