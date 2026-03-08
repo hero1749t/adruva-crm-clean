@@ -1002,6 +1002,9 @@ const SettingsPage = () => {
         </div>
       </div>
 
+      {/* Onboarding Checklist Templates */}
+      <OnboardingTemplatesSection />
+
       {/* Recurring Tasks Section */}
       <RecurringTasksSection />
 

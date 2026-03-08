@@ -341,6 +341,10 @@ const ClientDetailPage = () => {
           </div>
         </div>
 
+          {/* Onboarding Checklist */}
+          <OnboardingChecklist clientId={id!} clientName={client.client_name} />
+        </div>
+
         {/* Right Panel — Tasks */}
         <div className="lg:col-span-3">
           <div className="rounded-xl border border-border bg-card p-4">
