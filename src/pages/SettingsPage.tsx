@@ -20,6 +20,7 @@ import {
   XCircle,
   Timer,
   Repeat,
+  Send,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
