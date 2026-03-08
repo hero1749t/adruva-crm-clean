@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { logActivity } from "@/hooks/useActivityLog";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useClientHealthScores } from "@/hooks/useClientHealthScore";
+import HealthScoreBadge from "@/components/HealthScoreBadge";
 
 const clientStatusConfig: Record<string, { label: string; color: string }> = {
   active: { label: "Active", color: "bg-success/20 text-success" },
