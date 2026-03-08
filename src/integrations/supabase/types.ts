@@ -447,7 +447,7 @@ export type Database = {
         | "lead_lost"
       task_priority: "urgent" | "high" | "medium" | "low"
       task_status: "pending" | "in_progress" | "completed" | "overdue"
-      user_role: "owner" | "admin" | "team"
+      user_role: "owner" | "admin" | "team" | "task_manager"
       user_status: "active" | "inactive"
     }
     CompositeTypes: {
@@ -588,7 +588,7 @@ export const Constants = {
       ],
       task_priority: ["urgent", "high", "medium", "low"],
       task_status: ["pending", "in_progress", "completed", "overdue"],
-      user_role: ["owner", "admin", "team"],
+      user_role: ["owner", "admin", "team", "task_manager"],
       user_status: ["active", "inactive"],
     },
   },
