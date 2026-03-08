@@ -41,7 +41,7 @@ const createUserSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
   email: z.string().trim().email("Invalid email"),
   password: z.string().min(8, "Min 8 characters").max(72),
-  role: z.enum(["admin", "team"]),
+  role: z.enum(["admin", "team", "task_manager"]),
 });
 
 const TeamPage = () => {
