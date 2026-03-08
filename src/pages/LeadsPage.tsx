@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Download, Upload, ChevronLeft, ChevronRight, Trash2, UserPlus, X } from "lucide-react";
+import { Search, Plus, Download, Upload, ChevronLeft, ChevronRight, Trash2, UserPlus, X, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
