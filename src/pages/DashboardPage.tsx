@@ -172,6 +172,36 @@ const DashboardPage = () => {
     { month: "Mar", revenue: revenueThisMonth },
   ];
 
+  // Task completion over last 8 weeks
+  const taskCompletionData = (() => {
+    const weeks: { label: string; completed: number; pending: number; overdue: number }[] = [];
+    for (let w = 7; w >= 0; w--) {
+      const weekEnd = new Date(now);
+      weekEnd.setDate(weekEnd.getDate() - w * 7);
+      const weekStart = new Date(weekEnd);
+      weekStart.setDate(weekStart.getDate() - 7);
+      const label = `${weekStart.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+      const completed = tasks.filter((t) => {
+        if (t.status !== "completed" || !t.completed_at) return false;
+        const d = new Date(t.completed_at);
+        return d >= weekStart && d < weekEnd;
+      }).length;
+      const createdInWeek = tasks.filter((t) => {
+        if (!t.created_at) return false;
+        const d = new Date(t.created_at);
+        return d >= weekStart && d < weekEnd;
+      });
+      const pending = createdInWeek.filter((t) => t.status === "pending" || t.status === "in_progress").length;
+      const overdue = createdInWeek.filter((t) => t.status === "overdue").length;
+      weeks.push({ label, completed, pending, overdue });
+    }
+    return weeks;
+  })();
+
+  const totalCompleted = tasks.filter((t) => t.status === "completed").length;
+  const totalTasks = tasks.length;
+  const completionRate = totalTasks > 0 ? ((totalCompleted / totalTasks) * 100).toFixed(0) : "0";
+
   return (
     <div className="space-y-6">
       <div>
