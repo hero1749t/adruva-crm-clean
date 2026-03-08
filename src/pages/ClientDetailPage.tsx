@@ -438,6 +438,13 @@ const ClientDetailPage = () => {
               <h2 className="font-mono text-[10px] font-medium uppercase tracking-widest text-primary">
                 Tasks ({completedTasks}/{totalTasks} completed)
               </h2>
+              {isOwnerOrAdmin && (
+                <ApplyServiceTemplateDialog
+                  clientId={id!}
+                  clientName={client.client_name}
+                  assignedManager={client.assigned_manager}
+                />
+              )}
             </div>
 
             {totalTasks > 0 && (
