@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, Plus, Download, UserPlus, CheckCircle2, X, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,9 +47,10 @@ const taskStatusConfig: Record<string, { label: string; color: string }> = {
 };
 
 const TasksPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [assignedFilter, setAssignedFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
