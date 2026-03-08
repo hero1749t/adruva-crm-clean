@@ -15,6 +15,7 @@ const clientStatusConfig: Record<string, { label: string; color: string }> = {
 
 const ClientsPage = () => {
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
 
