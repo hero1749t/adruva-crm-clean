@@ -566,6 +566,12 @@ const ReportsPage = () => {
           </ResponsiveContainer>
         )}
       </div>
+
+      {/* Row 4: Lead Funnel + MRR */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <LeadConversionFunnel data={leadFunnelData} />
+        <MrrBreakdownChart data={mrrData} />
+      </div>
     </div>
   );
 };
