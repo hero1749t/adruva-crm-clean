@@ -53,6 +53,7 @@ const DroppableDay = ({
     <div
       ref={setNodeRef}
       onClick={() => canCreate && onDayClick(day)}
+      onDoubleClick={() => onDayDoubleClick?.(day)}
       className={cn(
         "group min-h-[100px] border-b border-r border-border/50 p-1.5 transition-colors",
         !inMonth && "bg-background/50",
