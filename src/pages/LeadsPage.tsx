@@ -28,6 +28,7 @@ const LeadsPage = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const perPage = 20;
   const navigate = useNavigate();
   const { profile } = useAuth();
