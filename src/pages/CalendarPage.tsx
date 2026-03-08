@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
+  Plus,
 } from "lucide-react";
 import {
   addMonths,
