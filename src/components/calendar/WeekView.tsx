@@ -69,7 +69,7 @@ const DroppableWeekDay = ({
   );
 };
 
-const WeekView = ({ currentWeekDate, tasksByDate, canCreate, canDrag, onDayClick }: WeekViewProps) => {
+const WeekView = ({ currentWeekDate, tasksByDate, canCreate, canDrag, onDayClick, onDayDoubleClick }: WeekViewProps) => {
   const weekDays = useMemo(() => {
     const start = startOfWeek(currentWeekDate);
     const end = endOfWeek(currentWeekDate);
