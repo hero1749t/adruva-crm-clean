@@ -47,6 +47,7 @@ const TasksPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [assignedFilter, setAssignedFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const perPage = 20;
