@@ -7,10 +7,16 @@ import {
   ClipboardList,
   AlertTriangle,
   DollarSign,
+  Activity,
+  UserX,
+  UserCog,
+  Shield,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
 import {
   BarChart,
   Bar,
