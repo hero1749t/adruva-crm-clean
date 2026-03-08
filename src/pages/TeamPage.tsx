@@ -109,7 +109,7 @@ const TeamPage = () => {
       queryClient.invalidateQueries({ queryKey: ["team"] });
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
       toast({ title: "Team member created" });
-      setFormData({ name: "", email: "", password: "", role: "team" });
+      setFormData({ name: "", email: "", password: "", role: "team", customRoleId: "" });
       setDialogOpen(false);
       logActivity({ entity: "team", entityId: data.userId, action: "member_created", metadata: { member_name: data.name, role: data.role, email: data.email } });
     },
