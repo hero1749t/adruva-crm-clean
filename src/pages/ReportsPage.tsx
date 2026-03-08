@@ -5,8 +5,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import {
   IndianRupee, TrendingUp, Users, ClipboardList,
-  Loader2, BarChart3, CalendarIcon, X,
+  Loader2, BarChart3, CalendarIcon, X, Download, FileText,
 } from "lucide-react";
+import { exportReportCsv, exportReportPdf, type ReportExportData } from "@/lib/report-export";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
