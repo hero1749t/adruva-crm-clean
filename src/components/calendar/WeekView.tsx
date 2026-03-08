@@ -18,6 +18,7 @@ interface WeekViewProps {
   canCreate: boolean;
   canDrag: boolean;
   onDayClick: (day: Date) => void;
+  onDayDoubleClick?: (day: Date) => void;
 }
 
 const DroppableWeekDay = ({
