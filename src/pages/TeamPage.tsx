@@ -292,7 +292,7 @@ const TeamPage = () => {
                           value={roleEditValue}
                           onValueChange={(v) => {
                             setRoleEditValue(v);
-                            updateRole.mutate({ userId: member.id, newRole: v });
+                            updateRole.mutate({ userId: member.id, newRole: v, memberName: member.name, oldRole: member.role });
                           }}
                         >
                           <SelectTrigger className="h-8 w-28 border-border bg-muted/30 text-xs">
