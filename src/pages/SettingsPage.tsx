@@ -69,12 +69,7 @@ const SettingsPage = () => {
   const [newDays, setNewDays] = useState(7);
 
   // Notification preferences
-  interface NotifPrefs {
-    due_tomorrow: boolean;
-    due_today: boolean;
-    overdue: boolean;
-  }
-
+  type NotifPrefs = { due_tomorrow: boolean; due_today: boolean; overdue: boolean };
   const defaultPrefs: NotifPrefs = { due_tomorrow: true, due_today: true, overdue: true };
 
   const { data: notifPrefs = defaultPrefs } = useQuery({
