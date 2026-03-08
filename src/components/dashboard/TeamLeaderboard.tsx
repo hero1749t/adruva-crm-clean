@@ -81,7 +81,7 @@ export function TeamLeaderboard({ tasks, dateRange = "30d" }: TeamLeaderboardPro
           <Trophy className="h-5 w-5 text-primary" />
           <div>
             <h3 className="font-display text-base font-bold text-foreground">Team Leaderboard</h3>
-            <p className="text-xs text-muted-foreground">Task completion rankings</p>
+            <p className="text-xs text-muted-foreground">Task completion rankings ({dateRange})</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5">
