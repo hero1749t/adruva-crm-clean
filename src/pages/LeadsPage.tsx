@@ -46,6 +46,7 @@ const leadStatusConfig: Record<string, { label: string; color: string }> = {
 
 const LeadsPage = () => {
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
   const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assignedFilter, setAssignedFilter] = useState<string>("all");
