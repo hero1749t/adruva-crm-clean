@@ -14,6 +14,7 @@ import ClientDetailPage from "@/pages/ClientDetailPage";
 import TasksPage from "@/pages/TasksPage";
 import CalendarPage from "@/pages/CalendarPage";
 import TeamPage from "@/pages/TeamPage";
+import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="tasks" element={<TasksPage />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="team" element={<TeamPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
