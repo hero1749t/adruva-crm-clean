@@ -85,14 +85,27 @@ const ClientsPage = () => {
         )}
       </div>
 
-      <div className="relative w-64">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search clients..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="h-9 border-border bg-muted/30 pl-9 text-sm"
-        />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search clients..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="h-9 border-border bg-muted/30 pl-9 text-sm"
+          />
+        </div>
+        <Select value={healthFilter} onValueChange={(v) => { setHealthFilter(v); setPage(1); }}>
+          <SelectTrigger className="h-9 w-40 border-border bg-muted/30 text-sm">
+            <SelectValue placeholder="All Health" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Health</SelectItem>
+            <SelectItem value="healthy">Healthy (80+)</SelectItem>
+            <SelectItem value="at_risk">At Risk (50-79)</SelectItem>
+            <SelectItem value="critical">Critical (&lt;50)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border">
