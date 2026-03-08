@@ -238,6 +238,7 @@ const CronJobsMonitor = () => {
           <li><strong>create-recurring-tasks</strong> — Auto-creates scheduled tasks for active clients (daily 8 AM IST)</li>
           <li><strong>contract-expiry-alerts</strong> — Notifies owners, admins & managers 30/15/7 days before contract ends (daily 8:05 AM IST)</li>
           <li><strong>lead-followup-reminders</strong> — Reminds team to follow up on stale leads at 3/7/14 days without update (daily 8:10 AM IST)</li>
+          <li><strong>weekly-report</strong> — Sends a full weekly performance summary email to all active team members (Sunday 8 PM IST)</li>
           <li>Status auto-refreshes every 60 seconds</li>
         </ul>
       </div>
