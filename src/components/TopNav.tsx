@@ -13,6 +13,7 @@ const roleBadgeVariant: Record<string, string> = {
 
 export function TopNav() {
   const { profile, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
