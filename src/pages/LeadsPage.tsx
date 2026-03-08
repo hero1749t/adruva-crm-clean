@@ -383,6 +383,10 @@ const LeadsPage = () => {
         </Select>
       </div>
 
+      {viewMode === "kanban" ? (
+        <LeadsKanbanView leads={kanbanData || []} isLoading={kanbanLoading} />
+      ) : (
+      <>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
           <thead>
