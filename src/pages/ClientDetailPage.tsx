@@ -216,7 +216,6 @@ const ClientDetailPage = () => {
 
   const completedTasks = tasks.filter((t) => t.status === "completed").length;
   const totalTasks = tasks.length;
-  const { healthScore } = useClientHealthScore(id || "");
 
   return (
     <div className="space-y-6">
