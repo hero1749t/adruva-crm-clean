@@ -1,11 +1,18 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import {
   IndianRupee, TrendingUp, Users, ClipboardList,
-  Loader2, BarChart3,
+  Loader2, BarChart3, CalendarIcon, X,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -33,6 +40,27 @@ const monthLabel = (d: string) => {
 const ReportsPage = () => {
   const { profile } = useAuth();
   const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
+
+  /* ── date range filter ── */
+  const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(subMonths(new Date(), 5)));
+  const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
+
+  const inRange = (dateStr: string | null) => {
+    if (!dateStr || (!startDate && !endDate)) return true;
+    const d = new Date(dateStr);
+    if (startDate && endDate) return isWithinInterval(d, { start: startDate, end: endDate });
+    if (startDate) return d >= startDate;
+    if (endDate) return d <= endDate;
+    return true;
+  };
+
+  const presets = [
+    { label: "Last 30d", fn: () => { setStartDate(subMonths(new Date(), 1)); setEndDate(endOfMonth(new Date())); }},
+    { label: "Last 3m", fn: () => { setStartDate(startOfMonth(subMonths(new Date(), 2))); setEndDate(endOfMonth(new Date())); }},
+    { label: "Last 6m", fn: () => { setStartDate(startOfMonth(subMonths(new Date(), 5))); setEndDate(endOfMonth(new Date())); }},
+    { label: "This Year", fn: () => { setStartDate(new Date(new Date().getFullYear(), 0, 1)); setEndDate(endOfMonth(new Date())); }},
+    { label: "All Time", fn: () => { setStartDate(undefined); setEndDate(undefined); }},
+  ];
 
   /* ── data fetching ── */
   const { data: invoices = [], isLoading: invLoading } = useQuery({
@@ -79,28 +107,32 @@ const ReportsPage = () => {
 
   const isLoading = invLoading || taskLoading;
 
+  /* ── filtered data ── */
+  const filteredInvoices = useMemo(() => invoices.filter((i) => inRange(i.created_at)), [invoices, startDate, endDate]);
+  const filteredTasks = useMemo(() => tasks.filter((t) => inRange(t.created_at)), [tasks, startDate, endDate]);
+
   /* ── computed metrics ── */
   const metrics = useMemo(() => {
-    const totalRevenue = invoices
+    const totalRevenue = filteredInvoices
       .filter((i) => i.status === "paid")
       .reduce((s, i) => s + (i.total_amount || 0), 0);
-    const outstanding = invoices
+    const outstanding = filteredInvoices
       .filter((i) => i.status === "sent" || i.status === "overdue")
       .reduce((s, i) => s + (i.total_amount || 0), 0);
-    const totalInvoices = invoices.length;
-    const paidInvoices = invoices.filter((i) => i.status === "paid").length;
+    const totalInvoices = filteredInvoices.length;
+    const paidInvoices = filteredInvoices.filter((i) => i.status === "paid").length;
     const collectionRate = totalInvoices > 0 ? Math.round((paidInvoices / totalInvoices) * 100) : 0;
     const activeClients = clients.filter((c) => c.status === "active").length;
-    const completedTasks = tasks.filter((t) => t.status === "completed").length;
-    const totalTasks = tasks.length;
+    const completedTasks = filteredTasks.filter((t) => t.status === "completed").length;
+    const totalTasks = filteredTasks.length;
 
     return { totalRevenue, outstanding, collectionRate, activeClients, completedTasks, totalTasks };
-  }, [invoices, clients, tasks]);
+  }, [filteredInvoices, clients, filteredTasks]);
 
   /* ── monthly revenue trend ── */
   const monthlyRevenue = useMemo(() => {
     const map: Record<string, { month: string; collected: number; billed: number }> = {};
-    invoices.forEach((inv) => {
+    filteredInvoices.forEach((inv) => {
       const month = (inv.created_at || "").slice(0, 7);
       if (!month) return;
       if (!map[month]) map[month] = { month, collected: 0, billed: 0 };
@@ -111,21 +143,21 @@ const ReportsPage = () => {
       .sort((a, b) => a.month.localeCompare(b.month))
       .slice(-12)
       .map((d) => ({ ...d, label: monthLabel(d.month) }));
-  }, [invoices]);
+  }, [filteredInvoices]);
 
   /* ── invoice status distribution ── */
   const invoiceStatusDist = useMemo(() => {
     const counts: Record<string, number> = { paid: 0, sent: 0, draft: 0, overdue: 0, cancelled: 0 };
-    invoices.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1; });
+    filteredInvoices.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1; });
     return Object.entries(counts)
       .filter(([, v]) => v > 0)
       .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }));
-  }, [invoices]);
+  }, [filteredInvoices]);
 
   /* ── team performance ── */
   const teamPerformance = useMemo(() => {
     return teamMembers.map((member) => {
-      const memberTasks = tasks.filter((t) => t.assigned_to === member.id);
+      const memberTasks = filteredTasks.filter((t) => t.assigned_to === member.id);
       const completed = memberTasks.filter((t) => t.status === "completed").length;
       const inProgress = memberTasks.filter((t) => t.status === "in_progress").length;
       const overdue = memberTasks.filter(
@@ -143,12 +175,12 @@ const ReportsPage = () => {
       };
     }).filter((m) => m.total > 0)
       .sort((a, b) => b.completed - a.completed);
-  }, [teamMembers, tasks]);
+  }, [teamMembers, filteredTasks]);
 
   /* ── client revenue ranking ── */
   const clientRevenue = useMemo(() => {
     const map: Record<string, { name: string; revenue: number }> = {};
-    invoices
+    filteredInvoices
       .filter((i) => i.status === "paid")
       .forEach((inv) => {
         const client = clients.find((c) => c.id === inv.client_id);
@@ -159,12 +191,13 @@ const ReportsPage = () => {
     return Object.values(map)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 8);
-  }, [invoices, clients]);
+  }, [filteredInvoices, clients]);
 
   /* ── monthly new clients ── */
+  const filteredClients = useMemo(() => clients.filter((c) => inRange(c.start_date)), [clients, startDate, endDate]);
   const monthlyClients = useMemo(() => {
     const map: Record<string, number> = {};
-    clients.forEach((c) => {
+    filteredClients.forEach((c) => {
       const month = (c.start_date || "").slice(0, 7);
       if (!month) return;
       map[month] = (map[month] || 0) + 1;
@@ -173,7 +206,7 @@ const ReportsPage = () => {
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(-12)
       .map(([month, count]) => ({ label: monthLabel(month), clients: count }));
-  }, [clients]);
+  }, [filteredClients]);
 
   const customTooltipStyle = {
     backgroundColor: "hsl(218, 49%, 13%)",
@@ -194,9 +227,97 @@ const ReportsPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Reports</h1>
-        <p className="text-sm text-muted-foreground">Revenue analytics, trends & team performance</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Reports</h1>
+          <p className="text-sm text-muted-foreground">Revenue analytics, trends & team performance</p>
+        </div>
+
+        {/* Date Range Filter */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Preset buttons */}
+          <div className="flex gap-1">
+            {presets.map((p) => (
+              <Button
+                key={p.label}
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                onClick={p.fn}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="h-5 w-px bg-border" />
+
+          {/* From date */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-8 w-[130px] justify-start gap-1.5 border-border bg-muted/30 text-xs",
+                  !startDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="h-3 w-3" />
+                {startDate ? format(startDate, "dd MMM yyyy") : "From"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={setStartDate}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <span className="text-xs text-muted-foreground">–</span>
+
+          {/* To date */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-8 w-[130px] justify-start gap-1.5 border-border bg-muted/30 text-xs",
+                  !endDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="h-3 w-3" />
+                {endDate ? format(endDate, "dd MMM yyyy") : "To"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          {(startDate || endDate) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={() => { setStartDate(undefined); setEndDate(undefined); }}
+              title="Clear dates"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPI Cards */}
