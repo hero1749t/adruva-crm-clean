@@ -234,15 +234,17 @@ Deno.serve(async (req) => {
         const myClients = (clients || []).filter((c) => c.assigned_manager === profile.id);
 
         scopedSection = `
-    <h3 style="color:#1e293b;font-size:13px;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin:24px 0 12px">Your Summary</h3>
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <tr><td style="padding:8px 0;color:#475569">Your Tasks</td><td style="text-align:right;font-weight:600">${myTasks.length}</td></tr>
-      <tr><td style="padding:8px 0;color:#475569">Completed</td><td style="text-align:right;font-weight:600;color:#16a34a">${myCompleted}</td></tr>
-      <tr><td style="padding:8px 0;color:#475569">Pending</td><td style="text-align:right;font-weight:600;color:#ca8a04">${myPending}</td></tr>
-      <tr><td style="padding:8px 0;color:#475569">Overdue</td><td style="text-align:right;font-weight:600;color:#dc2626">${myOverdue}</td></tr>
-      <tr><td style="padding:8px 0;color:#475569">Assigned Leads</td><td style="text-align:right;font-weight:600">${myLeads.length}</td></tr>
-      <tr><td style="padding:8px 0;color:#475569">Managed Clients</td><td style="text-align:right;font-weight:600">${myClients.length}</td></tr>
-    </table>`;
+    <div style="margin-top:8px;padding:20px;background:#1e293b;border-radius:12px;border:1px solid #1e3a5f">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:#fbbf24;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px">Your Summary</div>
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:10px 0;color:#94a3b8;font-size:14px">Your Tasks</td><td style="text-align:right;font-weight:700;color:#f1f5f9;font-family:'DM Mono',monospace;font-size:14px">${myTasks.length}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;font-size:14px;border-top:1px solid #0f172a">Completed</td><td style="text-align:right;font-weight:700;color:#34d399;font-family:'DM Mono',monospace;font-size:14px;border-top:1px solid #0f172a">${myCompleted}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;font-size:14px;border-top:1px solid #0f172a">Pending</td><td style="text-align:right;font-weight:700;color:#fbbf24;font-family:'DM Mono',monospace;font-size:14px;border-top:1px solid #0f172a">${myPending}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;font-size:14px;border-top:1px solid #0f172a">Overdue</td><td style="text-align:right;font-weight:700;color:#f87171;font-family:'DM Mono',monospace;font-size:14px;border-top:1px solid #0f172a">${myOverdue}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;font-size:14px;border-top:1px solid #0f172a">Assigned Leads</td><td style="text-align:right;font-weight:700;color:#60a5fa;font-family:'DM Mono',monospace;font-size:14px;border-top:1px solid #0f172a">${myLeads.length}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;font-size:14px;border-top:1px solid #0f172a">Managed Clients</td><td style="text-align:right;font-weight:700;color:#22d3ee;font-family:'DM Mono',monospace;font-size:14px;border-top:1px solid #0f172a">${myClients.length}</td></tr>
+      </table>
+    </div>`;
       }
 
       const html = buildEmail(profile.name, scopedSection);
