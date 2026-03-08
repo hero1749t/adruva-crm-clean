@@ -49,7 +49,9 @@ const LeadsPage = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [bulkAssignTo, setBulkAssignTo] = useState("");
+  const [bulkStatus, setBulkStatus] = useState("");
   const perPage = 20;
   const navigate = useNavigate();
   const { profile } = useAuth();
