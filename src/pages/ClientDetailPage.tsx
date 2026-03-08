@@ -19,6 +19,7 @@ import { useClientHealthScore } from "@/hooks/useClientHealthScore";
 import HealthScoreBadge from "@/components/HealthScoreBadge";
 import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 import { CommunicationLog } from "@/components/CommunicationLog";
+import { ClientAIInsights } from "@/components/ClientAIInsights";
 
 type ClientStatus = Database["public"]["Enums"]["client_status"];
 type BillingStatus = Database["public"]["Enums"]["billing_status"];
@@ -349,7 +350,10 @@ const ClientDetailPage = () => {
         </div>
 
         {/* Right Panel — Tasks */}
-        <div className="lg:col-span-3">
+        <div className="space-y-4 lg:col-span-3">
+          {/* AI Insights */}
+          <ClientAIInsights clientId={id!} />
+
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-mono text-[10px] font-medium uppercase tracking-widest text-primary">
