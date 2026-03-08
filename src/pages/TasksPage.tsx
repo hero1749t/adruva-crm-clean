@@ -314,6 +314,18 @@ const TasksPage = () => {
             ))}
           </SelectContent>
         </Select>
+        <Select value={dateFilter} onValueChange={(v) => { setDateFilter(v); setPage(1); }}>
+          <SelectTrigger className="h-9 w-40 border-border bg-muted/30 text-sm">
+            <SelectValue placeholder="All Dates" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Dates</SelectItem>
+            <SelectItem value="today">Today</SelectItem>
+            <SelectItem value="yesterday">Yesterday</SelectItem>
+            <SelectItem value="this_week">This Week</SelectItem>
+            <SelectItem value="this_month">This Month</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border">
