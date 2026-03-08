@@ -165,6 +165,27 @@ const TeamPage = () => {
     },
   });
 
+  const toggleStatus = useMutation({
+    mutationFn: async ({ userId, currentStatus, memberName }: { userId: string; currentStatus: string; memberName: string }) => {
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
+      const { error } = await supabase
+        .from("profiles")
+        .update({ status: newStatus as any })
+        .eq("id", userId);
+      if (error) throw error;
+      return { userId, newStatus, memberName, oldStatus: currentStatus };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+      queryClient.invalidateQueries({ queryKey: ["team-members"] });
+      toast({ title: data.newStatus === "active" ? "Member reactivated" : "Member deactivated" });
+      logActivity({ entity: "team", entityId: data.userId, action: data.newStatus === "active" ? "member_reactivated" : "member_deactivated", metadata: { member_name: data.memberName } });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Failed to update status", description: err.message, variant: "destructive" });
+    },
+  });
+
   const updateField = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setFormErrors((prev) => {
