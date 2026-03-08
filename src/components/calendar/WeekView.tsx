@@ -30,6 +30,7 @@ const DroppableWeekDay = ({
   canCreate,
   canDrag,
   onDayClick,
+  onDayDoubleClick,
 }: {
   dateKey: string;
   day: Date;
@@ -39,6 +40,7 @@ const DroppableWeekDay = ({
   canCreate: boolean;
   canDrag: boolean;
   onDayClick: (day: Date) => void;
+  onDayDoubleClick?: (day: Date) => void;
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: dateKey, data: { date: day } });
 
