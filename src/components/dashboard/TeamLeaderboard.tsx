@@ -32,7 +32,7 @@ const RANK_STYLES = [
   { icon: Medal, color: "text-amber-700", bg: "bg-amber-700/15", ring: "ring-amber-700/20" },
 ];
 
-export function TeamLeaderboard({ tasks }: TeamLeaderboardProps) {
+export function TeamLeaderboard({ tasks, dateRange = "30d" }: TeamLeaderboardProps) {
   const leaderboard = useMemo<MemberStats[]>(() => {
     const map = new Map<string, MemberStats>();
 
