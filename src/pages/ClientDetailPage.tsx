@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 import { useClientHealthScore } from "@/hooks/useClientHealthScore";
 import HealthScoreBadge from "@/components/HealthScoreBadge";
+import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 
 type ClientStatus = Database["public"]["Enums"]["client_status"];
 type BillingStatus = Database["public"]["Enums"]["billing_status"];
