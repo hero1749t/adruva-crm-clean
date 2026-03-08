@@ -13,6 +13,7 @@ import {
   UserCog,
   Shield,
   Trash2,
+  TrendingDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,9 @@ import {
   LineChart,
   Line,
   Legend,
+  FunnelChart,
+  Funnel,
+  LabelList,
 } from "recharts";
 
 function MetricCard({
