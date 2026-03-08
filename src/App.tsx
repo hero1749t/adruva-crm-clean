@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import LeadsPage from "@/pages/LeadsPage";
+import LeadDetailPage from "@/pages/LeadDetailPage";
 import ClientsPage from "@/pages/ClientsPage";
 import TasksPage from "@/pages/TasksPage";
 import TeamPage from "@/pages/TeamPage";
