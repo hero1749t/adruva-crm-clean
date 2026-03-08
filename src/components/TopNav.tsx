@@ -1,7 +1,8 @@
-import { Bell, LogOut, Search } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
 
 const roleBadgeVariant: Record<string, string> = {
   owner: "bg-destructive/20 text-destructive",
@@ -31,10 +32,7 @@ export function TopNav() {
 
       {/* Right side */}
       <div className="flex items-center gap-4">
-        <button className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
-        </button>
+        <NotificationDropdown />
 
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 font-display text-sm font-bold text-primary">
