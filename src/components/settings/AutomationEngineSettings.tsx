@@ -380,14 +380,15 @@ function CreateRuleForm({ onSuccess }: { onSuccess: () => void }) {
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from("automation_rules").insert({
+      const payload = {
         name: name.trim(),
         description: description.trim() || null,
         trigger_event: triggerEvent,
-        trigger_conditions: conditions,
-        actions,
+        trigger_conditions: conditions as any,
+        actions: actions as any,
         created_by: profile?.id,
-      });
+      };
+      const { error } = await supabase.from("automation_rules").insert(payload as any);
       if (error) throw error;
       toast({ title: "Automation created" });
       onSuccess();
