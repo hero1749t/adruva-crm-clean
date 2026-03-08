@@ -235,6 +235,46 @@ const SettingsPage = () => {
         </div>
       </div>
 
+      {/* Notification Preferences Section */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-display text-xl font-semibold text-foreground">
+            Notification Preferences
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Choose which task deadline reminders you receive
+          </p>
+        </div>
+
+        <div className="space-y-2 rounded-xl border border-border overflow-hidden">
+          {([
+            { key: "due_tomorrow" as const, label: "Due tomorrow", desc: "Get notified 1 day before a task deadline", icon: <CalendarClock className="h-4 w-4 text-primary" /> },
+            { key: "due_today" as const, label: "Due today", desc: "Get notified on the day a task is due", icon: <Clock className="h-4 w-4 text-warning" /> },
+            { key: "overdue" as const, label: "Overdue", desc: "Get notified when a task passes its deadline", icon: <AlertTriangle className="h-4 w-4 text-destructive" /> },
+          ]).map((item, i) => (
+            <div
+              key={item.key}
+              className={cn(
+                "flex items-center justify-between px-4 py-3",
+                i < 2 && "border-b border-border"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                {item.icon}
+                <div>
+                  <p className="text-sm font-medium text-foreground">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+              <Switch
+                checked={notifPrefs[item.key]}
+                onCheckedChange={(checked) => updateNotifPref.mutate({ [item.key]: checked })}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Task Templates Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
