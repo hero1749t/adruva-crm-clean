@@ -165,7 +165,7 @@ const CalendarPage = () => {
       if (isSameDay(oldDeadline, newDate) && oldDeadline.getHours() === newDate.getHours() && viewMode === "day") return;
       if (viewMode !== "day" && format(oldDeadline, "yyyy-MM-dd") === format(newDate, "yyyy-MM-dd")) return;
 
-      reschedule.mutate({ taskId: task.id, newDate });
+      reschedule.mutate({ taskId: task.id, newDate, oldDate: oldDeadline });
     },
     [reschedule, viewMode]
   );
