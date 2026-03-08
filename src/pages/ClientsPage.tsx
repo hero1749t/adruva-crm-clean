@@ -107,10 +107,31 @@ const ClientsPage = () => {
                     {isOwnerOrAdmin && (
                       <td className="px-4 py-3 text-muted-foreground">₹{Number(client.monthly_payment)?.toLocaleString() || "—"}</td>
                     )}
-                    <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
-                        {statusConf.label}
-                      </span>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      {isOwnerOrAdmin ? (
+                        <Select
+                          value={client.status || "active"}
+                          onValueChange={(v) => {
+                            supabase.from("clients").update({ status: v as any }).eq("id", client.id).then(() => {
+                              queryClient.invalidateQueries({ queryKey: ["clients"] });
+                              logActivity({ entity: "client", entityId: client.id, action: "status_changed", metadata: { name: client.client_name, from: client.status, to: v } });
+                            });
+                          }}
+                        >
+                          <SelectTrigger className={`h-7 w-[110px] border-none px-2.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(clientStatusConfig).map(([key, config]) => (
+                              <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className={`inline-block rounded-full px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider ${statusConf.color}`}>
+                          {statusConf.label}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{managerName}</td>
                     <td className="px-4 py-3 text-muted-foreground">{client.start_date ? new Date(client.start_date).toLocaleDateString() : "—"}</td>
