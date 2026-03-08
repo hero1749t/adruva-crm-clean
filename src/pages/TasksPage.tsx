@@ -26,6 +26,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLog";
 import { sendStatusEmail } from "@/lib/send-status-email";
+import { notifyTaskAssigned } from "@/lib/email-notifications";
 import { cn } from "@/lib/utils";
 import TaskDetailDrawer from "@/components/TaskDetailDrawer";
 
