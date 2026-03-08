@@ -62,7 +62,7 @@ const LeadsPage = () => {
   const isOwner = profile?.role === "owner";
 
   const { data: leads = [], isLoading } = useQuery({
-    queryKey: ["leads", statusFilter, search],
+    queryKey: ["leads", statusFilter, search, assignedFilter],
     queryFn: async () => {
       let query = supabase
         .from("leads")
@@ -72,6 +72,13 @@ const LeadsPage = () => {
 
       if (statusFilter !== "all") {
         query = query.eq("status", statusFilter as any);
+      }
+      if (assignedFilter !== "all") {
+        if (assignedFilter === "unassigned") {
+          query = query.is("assigned_to", null);
+        } else {
+          query = query.eq("assigned_to", assignedFilter);
+        }
       }
       if (search) {
         query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,company_name.ilike.%${search}%`);
