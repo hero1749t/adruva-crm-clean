@@ -52,6 +52,7 @@ const TasksPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
+  const [viewFilter, setViewFilter] = useState<"active" | "completed">("active");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [assignedFilter, setAssignedFilter] = useState("all");
