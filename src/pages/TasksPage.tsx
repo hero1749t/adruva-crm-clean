@@ -71,7 +71,7 @@ const TasksPage = () => {
   const isOwnerOrAdmin = can("tasks", "create");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["tasks", statusFilter, priorityFilter, debouncedSearch, assignedFilter, dateFilter, page],
+    queryKey: ["tasks", viewFilter, statusFilter, priorityFilter, debouncedSearch, assignedFilter, dateFilter, page],
     queryFn: async () => {
       const from = (page - 1) * perPage;
       const to = from + perPage - 1;
@@ -81,6 +81,13 @@ const TasksPage = () => {
         .select("*, clients!tasks_client_id_fkey(client_name), profiles!tasks_assigned_to_fkey(name)", { count: "exact" })
         .order("deadline", { ascending: true })
         .range(from, to);
+
+      // Apply view filter (active vs completed)
+      if (viewFilter === "active") {
+        query = query.in("status", ["pending", "in_progress", "overdue"]);
+      } else {
+        query = query.eq("status", "completed");
+      }
 
       if (statusFilter !== "all") query = query.eq("status", statusFilter as any);
       if (priorityFilter !== "all") query = query.eq("priority", priorityFilter as any);
