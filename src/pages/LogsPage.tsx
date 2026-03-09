@@ -30,6 +30,7 @@ const entityIcons: Record<string, React.ElementType> = {
   lead: UserPlus,
   client: UserCheck,
   task: ClipboardList,
+  security: Filter,
 };
 
 const actionColors: Record<string, string> = {
@@ -39,6 +40,7 @@ const actionColors: Record<string, string> = {
   status_changed: "bg-warning/15 text-warning border-warning/20",
   assigned: "bg-accent/15 text-accent-foreground border-accent/20",
   converted: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+  access_denied: "bg-destructive/15 text-destructive border-destructive/20",
 };
 
 const entityOptions = [
@@ -46,6 +48,7 @@ const entityOptions = [
   { value: "lead", label: "Leads" },
   { value: "client", label: "Clients" },
   { value: "task", label: "Tasks" },
+  { value: "security", label: "Security" },
 ];
 
 const actionOptions = [
@@ -56,6 +59,7 @@ const actionOptions = [
   { value: "status_changed", label: "Status Changed" },
   { value: "assigned", label: "Assigned" },
   { value: "converted", label: "Converted" },
+  { value: "access_denied", label: "Access Denied" },
 ];
 
 const LogsPage = () => {

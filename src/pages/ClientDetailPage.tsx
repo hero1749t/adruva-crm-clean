@@ -108,13 +108,15 @@ const ClientDetailPage = () => {
     enabled: !!id,
   });
 
+  // Fetch team members for assign dropdown - only show team/task_manager (not owner/admin)
   const { data: teamMembers = [] } = useQuery({
-    queryKey: ["team-members"],
+    queryKey: ["team-members-assignable"],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
         .select("id, name, role")
         .eq("status", "active")
+        .in("role", ["team", "task_manager"])
         .order("name");
       return data || [];
     },
@@ -174,6 +176,19 @@ const ClientDetailPage = () => {
   }
 
   if (!client) {
+    // Log blocked access attempt when client is not found (likely due to RLS)
+    if (id && profile?.id) {
+      logActivity({
+        entity: "security",
+        entityId: id,
+        action: "access_denied",
+        metadata: {
+          resource: "client",
+          reason: "client_not_found_or_unauthorized",
+          userRole: profile.role,
+        },
+      });
+    }
     return (
       <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/clients")} className="gap-2 text-muted-foreground">
