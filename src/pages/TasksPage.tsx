@@ -304,6 +304,7 @@ const TasksPage = () => {
             <SelectItem value="this_month">This Month</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border">
