@@ -45,14 +45,14 @@ const App = () => (
                 <Route path="clients/:id" element={<ClientDetailPage />} />
                 <Route path="tasks" element={<TasksPage />} />
                 <Route path="calendar" element={<CalendarPage />} />
-                <Route path="payments" element={<ProtectedRoute allowedRoles={["owner", "admin"]}><PaymentsPage /></ProtectedRoute>} />
-                <Route path="integrations" element={<ProtectedRoute allowedRoles={["owner"]}><IntegrationsPage /></ProtectedRoute>} />
-                <Route path="team" element={<ProtectedRoute allowedRoles={["owner", "admin"]}><TeamPage /></ProtectedRoute>} />
-                <Route path="settings" element={<ProtectedRoute allowedRoles={["owner"]}><SettingsPage /></ProtectedRoute>} />
-                <Route path="reports" element={<ProtectedRoute allowedRoles={["owner", "admin"]}><ReportsPage /></ProtectedRoute>} />
+                <Route path="payments" element={<ProtectedRoute allowedRoles={["owner", "admin"]} routeName="Payments"><PaymentsPage /></ProtectedRoute>} />
+                <Route path="integrations" element={<ProtectedRoute allowedRoles={["owner"]} routeName="Integrations"><IntegrationsPage /></ProtectedRoute>} />
+                <Route path="team" element={<ProtectedRoute allowedRoles={["owner", "admin"]} routeName="Team"><TeamPage /></ProtectedRoute>} />
+                <Route path="settings" element={<ProtectedRoute allowedRoles={["owner"]} routeName="Settings"><SettingsPage /></ProtectedRoute>} />
+                <Route path="reports" element={<ProtectedRoute allowedRoles={["owner", "admin"]} routeName="Reports"><ReportsPage /></ProtectedRoute>} />
                 <Route path="roles" element={<Navigate to="/team" replace />} />
                 <Route path="invoices" element={<Navigate to="/payments" replace />} />
-                <Route path="logs" element={<ProtectedRoute allowedRoles={["owner", "admin"]}><LogsPage /></ProtectedRoute>} />
+                <Route path="logs" element={<ProtectedRoute allowedRoles={["owner", "admin"]} routeName="Logs"><LogsPage /></ProtectedRoute>} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
