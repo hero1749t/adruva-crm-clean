@@ -268,6 +268,17 @@ const DashboardPage = () => {
         <DateRangeToggle value={dateRange} onChange={setDateRange} />
       </div>
 
+      {!isManager && (
+        <MyWorkCard
+          leadsCount={totalLeads}
+          clientsCount={activeClients}
+          pendingTasksCount={pendingTasks}
+          onLeadsClick={() => navigate("/leads")}
+          onClientsClick={() => navigate("/clients")}
+          onTasksClick={() => navigate("/tasks?status=pending")}
+        />
+      )}
+
       {overdueTasks > 0 && (
         <div
           className="flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/10 px-5 py-3.5 cursor-pointer transition-colors hover:bg-destructive/15 animate-fade-in"
