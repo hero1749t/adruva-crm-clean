@@ -17,6 +17,7 @@ import { SparklineMetricCard } from "@/components/dashboard/SparklineMetricCard"
 import { DateRangeToggle, type DateRange } from "@/components/dashboard/DateRangeToggle";
 import { LiveActivityFeed } from "@/components/dashboard/LiveActivityFeed";
 import { TeamLeaderboard } from "@/components/dashboard/TeamLeaderboard";
+import { MyWorkCard } from "@/components/dashboard/MyWorkCard";
 
 const CHART_COLORS = [
   "hsl(217, 91%, 60%)", "hsl(199, 89%, 48%)", "hsl(160, 84%, 39%)",
@@ -266,6 +267,17 @@ const DashboardPage = () => {
         </div>
         <DateRangeToggle value={dateRange} onChange={setDateRange} />
       </div>
+
+      {!isManager && (
+        <MyWorkCard
+          leadsCount={totalLeads}
+          clientsCount={activeClients}
+          pendingTasksCount={pendingTasks}
+          onLeadsClick={() => navigate("/leads")}
+          onClientsClick={() => navigate("/clients")}
+          onTasksClick={() => navigate("/tasks?status=pending")}
+        />
+      )}
 
       {overdueTasks > 0 && (
         <div
