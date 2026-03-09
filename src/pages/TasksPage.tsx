@@ -230,6 +230,13 @@ const TasksPage = () => {
         )}
       </div>
 
+      <Tabs value={viewFilter} onValueChange={(v) => { setViewFilter(v as "active" | "completed"); setPage(1); }} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="active">Active & Pending</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {selected.size > 0 && (
         <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
           <span className="text-sm font-medium text-foreground">{selected.size} task{selected.size !== 1 ? "s" : ""} selected</span>
