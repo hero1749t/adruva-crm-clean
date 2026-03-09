@@ -97,10 +97,12 @@ const NewLeadDrawer = ({ open, onOpenChange }: NewLeadDrawerProps) => {
         phone: values.phone.trim(),
         company_name: values.company_name?.trim() || null,
         source: values.source || null,
-        service_interest: values.service_interest?.trim() || null,
+        service_interest: values.service_interest?.trim() ? [values.service_interest.trim()] : null,
         assigned_to: values.assigned_to || null,
         notes: values.notes?.trim() || null,
-      }).select("id").single();
+        business_type: values.business_type || null,
+        budget: values.budget || null,
+      } as any).select("id").single();
       if (error) throw error;
       return { id: data.id, name: values.name.trim() };
     },
