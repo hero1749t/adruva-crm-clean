@@ -60,6 +60,9 @@ const ClientsPage = () => {
   const clientIds = clients.map((c) => c.id);
   const { data: healthScores } = useClientHealthScores(clientIds);
 
+  const { data: customFieldDefs = [] } = useCustomFieldDefs("client");
+  const { data: customFieldValues = {} } = useCustomFieldValues("client", clientIds);
+
   // Filter by health
   const filteredClients = healthFilter === "all"
     ? clients
