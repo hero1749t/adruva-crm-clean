@@ -472,6 +472,21 @@ const TasksPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selected.size} task{selected.size !== 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete the selected tasks. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={bulkDelete.isPending} onClick={(e) => { e.preventDefault(); bulkDelete.mutate(); }}>
+              {bulkDelete.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onOpenChange={(open) => { if (!open) setDetailTask(null); }} />
     </div>
   );
