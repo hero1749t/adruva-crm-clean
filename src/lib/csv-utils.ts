@@ -171,7 +171,9 @@ export async function importLeadsCsv(file: File): Promise<ImportResult> {
       phone: row.phone.trim(),
       company_name: row.company_name?.trim() || null,
       source: row.source?.trim() || null,
-      service_interest: row.service_interest?.trim() || null,
+      service_interest: row.service_interest?.trim() ? row.service_interest.trim().split(";").map(s => s.trim()) : null,
+      business_type: row.business_type?.trim() || null,
+      budget: row.budget?.trim() || null,
       notes: row.notes?.trim() || null,
     });
 
