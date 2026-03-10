@@ -78,9 +78,9 @@ const ClientsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {isOwnerOrAdmin ? "Clients" : "My Clients"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -95,7 +95,7 @@ const ClientsPage = () => {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-64">
+        <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search clients..."

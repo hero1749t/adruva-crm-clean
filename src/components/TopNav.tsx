@@ -1,4 +1,4 @@
-import { LogOut, Search, Sun, Moon } from "lucide-react";
+import { LogOut, Search, Sun, Moon, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,11 @@ const roleBadgeVariant: Record<string, string> = {
   team: "bg-success/20 text-success",
 };
 
-export function TopNav() {
+interface TopNavProps {
+  onMenuClick?: () => void;
+}
+
+export function TopNav({ onMenuClick }: TopNavProps) {
   const { profile, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -22,18 +26,43 @@ export function TopNav() {
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-6">
-      {/* Search */}
-      <div className="relative w-80">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search leads, clients..."
-          className="h-9 border-border bg-muted/50 pl-9 text-sm placeholder:text-muted-foreground"
-        />
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-3 sm:h-16 sm:px-6">
+      {/* Left side */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Mobile hamburger */}
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
+
+        {/* Mobile logo */}
+        <div className="flex items-center gap-2 md:hidden">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary font-display text-xs font-bold text-primary-foreground">
+            A
+          </div>
+        </div>
+
+        {/* Search - hidden on mobile, visible on sm+ */}
+        <div className="relative hidden sm:block sm:w-64 lg:w-80">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search leads, clients..."
+            className="h-9 border-border bg-muted/50 pl-9 text-sm placeholder:text-muted-foreground"
+          />
+        </div>
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Mobile search button */}
+        <button className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:hidden">
+          <Search className="h-5 w-5" />
+        </button>
+
         <button
           onClick={toggleTheme}
           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -44,7 +73,7 @@ export function TopNav() {
 
         <NotificationDropdown />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 font-display text-sm font-bold text-primary">
             {profile?.name?.charAt(0) || "?"}
           </div>

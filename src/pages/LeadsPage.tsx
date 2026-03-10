@@ -272,16 +272,16 @@ const LeadsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {isOwnerOrAdmin ? "Leads" : "My Leads"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {totalCount} {isOwnerOrAdmin ? "total" : "assigned"} lead{totalCount !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex rounded-lg border border-border bg-muted/30 p-0.5">
             <Button
               variant={viewMode === "table" ? "default" : "ghost"}
@@ -289,7 +289,7 @@ const LeadsPage = () => {
               className="h-7 gap-1.5 px-2.5"
               onClick={() => setViewMode("table")}
             >
-              <List className="h-3.5 w-3.5" /> Table
+              <List className="h-3.5 w-3.5" /> <span className="hidden xs:inline">Table</span>
             </Button>
             <Button
               variant={viewMode === "kanban" ? "default" : "ghost"}
@@ -297,19 +297,19 @@ const LeadsPage = () => {
               className="h-7 gap-1.5 px-2.5"
               onClick={() => setViewMode("kanban")}
             >
-              <LayoutGrid className="h-3.5 w-3.5" /> Kanban
+              <LayoutGrid className="h-3.5 w-3.5" /> <span className="hidden xs:inline">Kanban</span>
             </Button>
           </div>
           {isOwnerOrAdmin && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" className="gap-2" onClick={() => setImportOpen(true)}>
-                <Upload className="h-4 w-4" /> Import
+                <Upload className="h-4 w-4" /> <span className="hidden sm:inline">Import</span>
               </Button>
               <Button variant="outline" size="sm" className="gap-2" onClick={() => exportLeadsCsv(leads, customFieldDefs, customFieldValues)}>
-                <Download className="h-4 w-4" /> Export
+                <Download className="h-4 w-4" /> <span className="hidden sm:inline">Export</span>
               </Button>
               <Button size="sm" className="gap-2" onClick={() => setDrawerOpen(true)}>
-                <Plus className="h-4 w-4" /> New Lead
+                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">New Lead</span>
               </Button>
             </div>
           )}
@@ -345,7 +345,7 @@ const LeadsPage = () => {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-64">
+        <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search name, email, phone..."
