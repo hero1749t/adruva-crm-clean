@@ -126,7 +126,7 @@ export async function importLeadsCsv(file: File): Promise<ImportResult> {
   }
 
   // Detect custom field columns (not in base headers)
-  const baseHeaderSet = new Set([...CSV_HEADERS]);
+  const baseHeaderSet = new Set<string>([...CSV_HEADERS]);
   const customHeaders = headers.filter((h) => !baseHeaderSet.has(h));
 
   // Fetch custom field definitions for mapping
