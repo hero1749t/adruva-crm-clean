@@ -384,6 +384,9 @@ const LeadDetailPage = () => {
               </div>
             )}
           </div>
+
+          {/* Custom Fields */}
+          <CustomFieldsSection entityType="lead" entityId={id!} />
         </div>
 
         {/* Right Panel — Activity Timeline */}
