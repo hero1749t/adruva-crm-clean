@@ -662,7 +662,6 @@ const ClientDetailPage = () => {
           <ClientAIInsights clientId={id!} />
         </TabsContent>
       </Tabs>
-    </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
