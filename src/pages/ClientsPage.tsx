@@ -266,6 +266,7 @@ const ClientsPage = () => {
           </div>
         )}
       </div>
+      <NewClientDialog open={showNewClient} onOpenChange={setShowNewClient} />
     </div>
   );
 };
