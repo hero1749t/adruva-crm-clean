@@ -67,9 +67,10 @@ const LeadsPage = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { can } = usePermissions();
-  const isOwnerOrAdmin = can("leads", "create");
-  const isOwner = can("leads", "delete");
+  const { can, isOwner, isAdmin } = usePermissions();
+  const canCreateLeads = can("leads", "create");
+  const canDeleteLeads = can("leads", "delete");
+  const showAssignedFilter = isOwner || isAdmin;
 
   const { data, isLoading } = useQuery({
     queryKey: ["leads", statusFilter, debouncedSearch, assignedFilter, dateFilter, page],
