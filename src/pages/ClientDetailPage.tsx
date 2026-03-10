@@ -7,13 +7,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Phone, Mail, Building2, Calendar, IndianRupee,
   Check, X, Pencil, Loader2, ExternalLink, Activity,
-  ClipboardList, FileText, MessageSquare, BarChart3, Settings2,
+  ClipboardList, FileText, MessageSquare, BarChart3, Settings2, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
@@ -64,6 +68,8 @@ const ClientDetailPage = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
+  const isOwner = profile?.role === "owner";
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -147,6 +153,22 @@ const ClientDetailPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-tasks", id] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+
+  const deleteClient = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("clients").delete().eq("id", id!);
+      if (error) throw error;
+      logActivity({ entity: "client", entityId: id!, action: "deleted", metadata: { name: client?.client_name } });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast({ title: "Client deleted" });
+      navigate("/clients");
+    },
+    onError: (err: Error) => {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -283,6 +305,11 @@ const ClientDetailPage = () => {
               {healthScore.label}
             </span>
           </div>
+        )}
+        {isOwner && (
+          <Button variant="outline" size="sm" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setDeleteDialogOpen(true)}>
+            <Trash2 className="h-4 w-4" /> Delete
+          </Button>
         )}
       </div>
 
@@ -635,6 +662,21 @@ const ClientDetailPage = () => {
           <ClientAIInsights clientId={id!} />
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete client "{client?.client_name}"?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete this client and cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={deleteClient.isPending} onClick={(e) => { e.preventDefault(); deleteClient.mutate(); }}>
+              {deleteClient.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

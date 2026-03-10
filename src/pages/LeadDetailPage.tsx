@@ -10,7 +10,7 @@ import { CommunicationLog } from "@/components/CommunicationLog";
 import { CustomFieldsSection } from "@/components/CustomFieldsSection";
 import {
   ArrowLeft, Phone, Mail, Building2, Globe, StickyNote,
-  Check, X, Pencil, MessageSquare, Calendar, FileText, Send, Loader2,
+  Check, X, Pencil, MessageSquare, Calendar, FileText, Send, Loader2, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -47,6 +51,8 @@ const LeadDetailPage = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
+  const isOwner = profile?.role === "owner";
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Inline edit state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -160,6 +166,22 @@ const LeadDetailPage = () => {
     },
     onError: (err: Error) => {
       toast({ title: "Failed to add activity", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteLead = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("leads").update({ is_deleted: true }).eq("id", id!);
+      if (error) throw error;
+      logActivity({ entity: "lead", entityId: id!, action: "deleted", metadata: { name: lead?.name } });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast({ title: "Lead deleted" });
+      navigate("/leads");
+    },
+    onError: (err: Error) => {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -281,9 +303,16 @@ const LeadDetailPage = () => {
             <p className="text-sm text-muted-foreground truncate">{lead.company_name}</p>
           )}
         </div>
-        <span className={`self-start rounded-full px-3 py-1 font-mono text-[10px] font-medium uppercase tracking-wider whitespace-nowrap ${statusConf.color}`}>
-          {statusConf.label}
-        </span>
+        <div className="flex items-center gap-2 self-start">
+          <span className={`rounded-full px-3 py-1 font-mono text-[10px] font-medium uppercase tracking-wider whitespace-nowrap ${statusConf.color}`}>
+            {statusConf.label}
+          </span>
+          {isOwner && (
+            <Button variant="outline" size="sm" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4" /> Delete
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Two-panel layout */}
@@ -493,6 +522,21 @@ const LeadDetailPage = () => {
           <CommunicationLog entityType="lead" entityId={id!} />
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete lead "{lead?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>This will soft-delete this lead. It can be recovered later if needed.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={deleteLead.isPending} onClick={(e) => { e.preventDefault(); deleteLead.mutate(); }}>
+              {deleteLead.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

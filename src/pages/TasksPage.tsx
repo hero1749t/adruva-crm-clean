@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, Plus, Download, UserPlus, CheckCircle2, X, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { Search, Plus, Download, UserPlus, CheckCircle2, X, ChevronLeft, ChevronRight, User, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +62,7 @@ const TasksPage = () => {
   const perPage = 25;
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkAssignTo, setBulkAssignTo] = useState("");
   const [detailTask, setDetailTask] = useState<any | null>(null);
   const { profile } = useAuth();
@@ -213,6 +214,27 @@ const TasksPage = () => {
     },
   });
 
+  const bulkDelete = useMutation({
+    mutationFn: async () => {
+      const ids = Array.from(selected);
+      const { error } = await supabase.from("tasks").delete().in("id", ids);
+      if (error) throw error;
+      for (const id of ids) {
+        const task = tasks.find((t) => t.id === id);
+        logActivity({ entity: "task", entityId: id, action: "deleted", metadata: { title: task?.task_title } });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast({ title: `${selected.size} task(s) deleted` });
+      clearSelection();
+      setDeleteDialogOpen(false);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const startItem = totalCount === 0 ? 0 : (page - 1) * perPage + 1;
   const endItem = Math.min(page * perPage, totalCount);
 
@@ -252,6 +274,11 @@ const TasksPage = () => {
                     <UserPlus className="h-4 w-4" /> Assign
                   </Button>
                 </>
+              )}
+              {isOwner && (
+                <Button variant="outline" size="sm" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setDeleteDialogOpen(true)}>
+                  <Trash2 className="h-4 w-4" /> Delete
+                </Button>
               )}
               <Button variant="ghost" size="sm" onClick={clearSelection}><X className="h-4 w-4" /></Button>
             </div>
@@ -440,6 +467,21 @@ const TasksPage = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction disabled={bulkComplete.isPending} onClick={(e) => { e.preventDefault(); bulkComplete.mutate(); }}>
               {bulkComplete.isPending ? "Completing..." : "Mark Complete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selected.size} task{selected.size !== 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete the selected tasks. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={bulkDelete.isPending} onClick={(e) => { e.preventDefault(); bulkDelete.mutate(); }}>
+              {bulkDelete.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
