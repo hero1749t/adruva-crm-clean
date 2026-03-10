@@ -297,7 +297,6 @@ const TasksPage = () => {
             </SelectContent>
           </Select>
         )}
-        </Select>
         <Select value={dateFilter} onValueChange={(v) => { setDateFilter(v); setPage(1); }}>
           <SelectTrigger className="h-9 w-40 border-border bg-muted/30 text-sm"><SelectValue placeholder="All Dates" /></SelectTrigger>
           <SelectContent>
