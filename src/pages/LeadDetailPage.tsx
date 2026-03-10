@@ -303,10 +303,16 @@ const LeadDetailPage = () => {
             <p className="text-sm text-muted-foreground truncate">{lead.company_name}</p>
           )}
         </div>
-        <span className={`self-start rounded-full px-3 py-1 font-mono text-[10px] font-medium uppercase tracking-wider whitespace-nowrap ${statusConf.color}`}>
-          {statusConf.label}
-        </span>
-      </div>
+        <div className="flex items-center gap-2 self-start">
+          <span className={`rounded-full px-3 py-1 font-mono text-[10px] font-medium uppercase tracking-wider whitespace-nowrap ${statusConf.color}`}>
+            {statusConf.label}
+          </span>
+          {isOwner && (
+            <Button variant="outline" size="sm" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4" /> Delete
+            </Button>
+          )}
+        </div>
 
       {/* Two-panel layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
