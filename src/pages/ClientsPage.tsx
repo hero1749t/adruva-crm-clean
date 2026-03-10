@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, Search, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import NewClientDialog from "@/components/NewClientDialog";
 import { exportClientsCsv } from "@/lib/csv-utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ const ClientsPage = () => {
   const [assignedFilter, setAssignedFilter] = useState<string>("all");
   const perPage = 25;
   const navigate = useNavigate();
+  const [showNewClient, setShowNewClient] = useState(false);
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
@@ -106,11 +108,16 @@ const ClientsPage = () => {
             {totalCount} {isOwnerOrAdmin ? "" : "assigned "}client{totalCount !== 1 ? "s" : ""}
           </p>
         </div>
-        {isOwnerOrAdmin && (
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => exportClientsCsv(clients, customFieldDefs, customFieldValues)}>
-            <Download className="h-4 w-4" /> Export
+        <div className="flex items-center gap-2">
+          {isOwnerOrAdmin && (
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => exportClientsCsv(clients, customFieldDefs, customFieldValues)}>
+              <Download className="h-4 w-4" /> Export
+            </Button>
+          )}
+          <Button size="sm" className="gap-2" onClick={() => setShowNewClient(true)}>
+            <Plus className="h-4 w-4" /> New Client
           </Button>
-        )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -259,6 +266,7 @@ const ClientsPage = () => {
           </div>
         )}
       </div>
+      <NewClientDialog open={showNewClient} onOpenChange={setShowNewClient} />
     </div>
   );
 };
