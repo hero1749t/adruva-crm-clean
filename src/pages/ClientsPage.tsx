@@ -199,7 +199,7 @@ const ClientsPage = () => {
                     <td className="px-4 py-3 text-muted-foreground">{client.start_date ? new Date(client.start_date).toLocaleDateString() : "—"}</td>
                     {customFieldDefs.map((def) => (
                       <td key={def.id} className="px-4 py-3 text-muted-foreground">
-                        {customFieldValues[client.id]?.[def.id] || "—"}
+                        {(() => { const v = customFieldValues[client.id]?.[def.id]; return (typeof v === "object" && v !== null ? JSON.stringify(v) : v) || "—"; })()}
                       </td>
                     ))}
                   </tr>
