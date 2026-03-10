@@ -313,6 +313,7 @@ const LeadDetailPage = () => {
             </Button>
           )}
         </div>
+      </div>
 
       {/* Two-panel layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
