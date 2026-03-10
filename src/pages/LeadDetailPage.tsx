@@ -521,7 +521,6 @@ const LeadDetailPage = () => {
           <CommunicationLog entityType="lead" entityId={id!} />
         </div>
       </div>
-    </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
