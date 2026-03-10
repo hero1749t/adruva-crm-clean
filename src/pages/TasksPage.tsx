@@ -62,6 +62,7 @@ const TasksPage = () => {
   const perPage = 25;
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkAssignTo, setBulkAssignTo] = useState("");
   const [detailTask, setDetailTask] = useState<any | null>(null);
   const { profile } = useAuth();
