@@ -29,6 +29,7 @@ const ClientsPage = () => {
   const [assignedFilter, setAssignedFilter] = useState<string>("all");
   const perPage = 25;
   const navigate = useNavigate();
+  const [showNewClient, setShowNewClient] = useState(false);
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
