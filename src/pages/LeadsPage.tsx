@@ -35,6 +35,7 @@ import LeadsKanbanView from "@/components/leads/LeadsKanbanView";
 import { exportLeadsCsv } from "@/lib/csv-utils";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useCustomFieldDefs, useCustomFieldValues } from "@/hooks/useCustomFields";
 
 const leadStatusConfig: Record<string, { label: string; color: string }> = {
   new_lead: { label: "New Lead", color: "bg-muted text-muted-foreground" },
@@ -157,6 +158,10 @@ const LeadsPage = () => {
       return data || [];
     },
   });
+
+  const { data: customFieldDefs = [] } = useCustomFieldDefs("lead");
+  const leadIds = leads.map((l) => l.id);
+  const { data: customFieldValues = {} } = useCustomFieldValues("lead", leadIds);
 
   const allPageSelected = leads.length > 0 && leads.every((l) => selected.has(l.id));
 
@@ -300,7 +305,7 @@ const LeadsPage = () => {
               <Button variant="outline" size="sm" className="gap-2" onClick={() => setImportOpen(true)}>
                 <Upload className="h-4 w-4" /> Import
               </Button>
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => exportLeadsCsv(leads)}>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => exportLeadsCsv(leads, customFieldDefs, customFieldValues)}>
                 <Download className="h-4 w-4" /> Export
               </Button>
               <Button size="sm" className="gap-2" onClick={() => setDrawerOpen(true)}>
@@ -405,6 +410,9 @@ const LeadsPage = () => {
               <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-widest text-primary">Assigned To</th>
               <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-widest text-primary">Source</th>
               <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-widest text-primary">Created</th>
+              {customFieldDefs.map((def) => (
+                <th key={def.id} className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-widest text-primary">{def.label}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -473,6 +481,11 @@ const LeadsPage = () => {
                     <td className="px-4 py-3 text-muted-foreground">{assignedName}</td>
                     <td className="px-4 py-3 text-muted-foreground capitalize">{lead.source?.replace("_", " ") || "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{lead.created_at ? new Date(lead.created_at).toLocaleDateString() : "—"}</td>
+                    {customFieldDefs.map((def) => (
+                      <td key={def.id} className="px-4 py-3 text-muted-foreground">
+                        {customFieldValues[lead.id]?.[def.id] || "—"}
+                      </td>
+                    ))}
                   </tr>
                 );
               })

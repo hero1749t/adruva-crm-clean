@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { exportClientsCsv } from "@/lib/csv-utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +12,7 @@ import { logActivity } from "@/hooks/useActivityLog";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useClientHealthScores } from "@/hooks/useClientHealthScore";
 import HealthScoreBadge from "@/components/HealthScoreBadge";
+import { useCustomFieldDefs, useCustomFieldValues } from "@/hooks/useCustomFields";
 
 const clientStatusConfig: Record<string, { label: string; color: string }> = {
   active: { label: "Active", color: "bg-success/20 text-success" },
@@ -59,6 +61,9 @@ const ClientsPage = () => {
   const clientIds = clients.map((c) => c.id);
   const { data: healthScores } = useClientHealthScores(clientIds);
 
+  const { data: customFieldDefs = [] } = useCustomFieldDefs("client");
+  const { data: customFieldValues = {} } = useCustomFieldValues("client", clientIds);
+
   // Filter by health
   const filteredClients = healthFilter === "all"
     ? clients
@@ -83,7 +88,7 @@ const ClientsPage = () => {
           </p>
         </div>
         {isOwnerOrAdmin && (
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => exportClientsCsv(clients, customFieldDefs, customFieldValues)}>
             <Download className="h-4 w-4" /> Export
           </Button>
         )}
@@ -126,6 +131,9 @@ const ClientsPage = () => {
               <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-widest text-primary">Health</th>
               <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-widest text-primary">Manager</th>
               <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-widest text-primary">Start Date</th>
+              {customFieldDefs.map((def) => (
+                <th key={def.id} className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-widest text-primary">{def.label}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -189,6 +197,11 @@ const ClientsPage = () => {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{managerName}</td>
                     <td className="px-4 py-3 text-muted-foreground">{client.start_date ? new Date(client.start_date).toLocaleDateString() : "—"}</td>
+                    {customFieldDefs.map((def) => (
+                      <td key={def.id} className="px-4 py-3 text-muted-foreground">
+                        {customFieldValues[client.id]?.[def.id] || "—"}
+                      </td>
+                    ))}
                   </tr>
                 );
               })
