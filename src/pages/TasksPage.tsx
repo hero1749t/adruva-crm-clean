@@ -431,7 +431,35 @@ const TasksPage = () => {
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{assignedName}</td>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      {isOwnerOrAdmin ? (
+                        <Select
+                          value={task.assigned_to || "unassigned"}
+                          onValueChange={(v) => {
+                            const newAssignedTo = v === "unassigned" ? null : v;
+                            const oldName = (task as any).profiles?.name || "Unassigned";
+                            const newName = v === "unassigned" ? "Unassigned" : teamMembers.find((m) => m.id === v)?.name || "Unknown";
+                            supabase.from("tasks").update({ assigned_to: newAssignedTo }).eq("id", task.id).then(() => {
+                              queryClient.invalidateQueries({ queryKey: ["tasks"] });
+                              logActivity({ entity: "task", entityId: task.id, action: "assigned", metadata: { title: task.task_title, from: oldName, to: newName } });
+                              if (newAssignedTo) {
+                                notifyTaskAssigned({ taskTitle: task.task_title, assignedToId: newAssignedTo, assignedToName: newName, clientName: (task as any).clients?.client_name, deadline: task.deadline });
+                              }
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="h-7 w-[140px] border-none px-2 py-0.5 text-xs text-muted-foreground">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {teamMembers.map((m) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-muted-foreground">{assignedName}</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{task.deadline ? new Date(task.deadline).toLocaleDateString() : "—"}</td>
                   </tr>
                 );
