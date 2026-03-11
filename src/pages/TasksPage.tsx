@@ -66,6 +66,7 @@ const TasksPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkAssignTo, setBulkAssignTo] = useState("");
   const [detailTask, setDetailTask] = useState<any | null>(null);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
