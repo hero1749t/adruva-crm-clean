@@ -35,7 +35,9 @@ interface NewTaskDialogProps {
 
 const NewTaskDialog = ({ open, onOpenChange, defaultDate }: NewTaskDialogProps) => {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const isOwnerOrAdmin = profile?.role === "owner" || profile?.role === "admin";
 
   const [title, setTitle] = useState("");
   const [clientId, setClientId] = useState("");
