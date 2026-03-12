@@ -464,7 +464,7 @@ const DashboardPage = () => {
             </ResponsiveContainer>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-lg">
+          <div className="rounded-2xl glass p-5 transition-all hover:glow-sm">
             <h3 className="mb-4 font-display text-base font-bold text-foreground">My Lead Pipeline</h3>
             <p className="mb-2 text-[10px] text-muted-foreground">Status of leads assigned to you</p>
             {totalLeads === 0 ? (
