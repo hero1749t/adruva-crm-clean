@@ -282,21 +282,21 @@ const DashboardPage = () => {
 
       {overdueTasks > 0 && (
         <div
-          className="flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/10 px-5 py-3.5 cursor-pointer transition-colors hover:bg-destructive/15 animate-fade-in"
+          className="flex items-center justify-between rounded-2xl glass border-destructive/20 bg-destructive/[0.08] px-5 py-3.5 cursor-pointer transition-all hover:bg-destructive/[0.12] hover:shadow-lg hover:shadow-destructive/5 animate-fade-in"
           onClick={() => navigate("/tasks?status=overdue")}
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/15">
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <div>
               <p className="text-sm font-semibold text-destructive">
                 {overdueTasks} overdue task{overdueTasks !== 1 ? "s" : ""} need attention
               </p>
-              <p className="text-xs text-destructive/70">Click to view and resolve overdue tasks</p>
+              <p className="text-xs text-destructive/60">Click to view and resolve overdue tasks</p>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-destructive/50" />
+          <ChevronRight className="h-5 w-5 text-destructive/40" />
         </div>
       )}
 
