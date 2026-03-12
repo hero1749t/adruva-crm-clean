@@ -24,7 +24,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import CustomFieldsPage from "@/pages/CustomFieldsPage";
 import ProfileSettingsPage from "@/pages/ProfileSettingsPage";
 import NotFound from "@/pages/NotFound";
-
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 const queryClient = new QueryClient();
 
 const App = () => (
