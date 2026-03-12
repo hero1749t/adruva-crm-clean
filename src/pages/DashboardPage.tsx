@@ -625,7 +625,7 @@ const DashboardPage = () => {
 
       {/* Revenue Chart (owner only) */}
       {profile?.role === "owner" && (
-        <div className="rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-lg">
+        <div className="rounded-2xl glass p-5 transition-all hover:glow-sm">
           <h3 className="mb-4 font-display text-base font-bold text-foreground">Monthly Revenue</h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={revenueData}>
