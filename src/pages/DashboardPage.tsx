@@ -596,7 +596,7 @@ const DashboardPage = () => {
         {isManager && <TeamLeaderboard tasks={rangeTasks} dateRange={dateRange} />}
         <LiveActivityFeed />
         {!isManager && (
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-2xl glass p-5">
             <div className="flex items-center gap-2 mb-4">
               <Target className="h-5 w-5 text-primary" />
               <h3 className="font-display text-base font-bold text-foreground">Quick Summary</h3>
