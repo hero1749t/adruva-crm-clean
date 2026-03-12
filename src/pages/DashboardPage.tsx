@@ -28,10 +28,11 @@ const FUNNEL_COLORS = [
   "hsl(160, 84%, 39%)", "hsl(142, 71%, 45%)",
 ];
 const TOOLTIP_STYLE = {
-  background: "hsl(218, 49%, 13%)",
-  border: "1px solid hsl(213, 50%, 24%)",
-  borderRadius: 8,
-  color: "hsl(214, 32%, 91%)",
+  background: "hsl(222, 47%, 10%)",
+  border: "1px solid hsl(222, 30%, 22%)",
+  borderRadius: 12,
+  color: "hsl(210, 40%, 96%)",
+  backdropFilter: "blur(16px)",
 };
 
 function getRangeDays(range: DateRange) {
