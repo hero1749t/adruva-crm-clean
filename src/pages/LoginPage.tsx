@@ -68,55 +68,107 @@ const LoginPage = () => {
             <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
               ADRUVA <span className="text-primary">CRM</span>
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {forgotMode ? "Reset your password" : "Sign in to your account"}
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                Email
-              </label>
-              <Input
-                type="email"
-                placeholder="you@adruva.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="border-border bg-muted/30"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                Password
-              </label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="border-border bg-muted/30 pr-10"
-                />
+          {forgotMode ? (
+            resetSent ? (
+              <div className="space-y-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Password reset link has been sent to <strong className="text-foreground">{email}</strong>. Check your inbox.
+                </p>
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => { setForgotMode(false); setResetSent(false); setError(""); }}
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <ArrowLeft className="h-3 w-3" /> Back to login
                 </button>
               </div>
-              {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
-            </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div>
+                  <label className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                    Email
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="you@adruva.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="border-border bg-muted/30"
+                  />
+                  {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
+                </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Sign In
-            </Button>
+                <Button type="submit" className="w-full" disabled={resetLoading}>
+                  {resetLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Send Reset Link
+                </Button>
 
-            <button type="button" className="w-full text-center text-sm text-primary hover:underline">
-              Forgot password?
-            </button>
-          </form>
+                <button
+                  type="button"
+                  onClick={() => { setForgotMode(false); setError(""); }}
+                  className="inline-flex w-full items-center justify-center gap-1 text-sm text-primary hover:underline"
+                >
+                  <ArrowLeft className="h-3 w-3" /> Back to login
+                </button>
+              </form>
+            )
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="you@adruva.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border-border bg-muted/30"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                  Password
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="border-border bg-muted/30 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Sign In
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => { setForgotMode(true); setError(""); }}
+                className="w-full text-center text-sm text-primary hover:underline"
+              >
+                Forgot password?
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>
