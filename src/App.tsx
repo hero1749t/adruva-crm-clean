@@ -24,7 +24,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import CustomFieldsPage from "@/pages/CustomFieldsPage";
 import ProfileSettingsPage from "@/pages/ProfileSettingsPage";
 import NotFound from "@/pages/NotFound";
-
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -37,6 +37,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/" element={<AppLayout />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
