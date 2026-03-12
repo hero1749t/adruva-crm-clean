@@ -552,7 +552,7 @@ const DashboardPage = () => {
       )}
 
       {/* Task Completion Rate */}
-      <div className="rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-lg">
+      <div className="rounded-2xl glass p-5 transition-all hover:glow-sm">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckSquare className="h-5 w-5 text-success" />
