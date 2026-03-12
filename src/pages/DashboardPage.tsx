@@ -397,7 +397,7 @@ const DashboardPage = () => {
       {/* Charts Row - Conditional based on role */}
       {isManager ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-lg">
+          <div className="rounded-2xl glass p-5 transition-all hover:glow-sm">
             <h3 className="mb-4 font-display text-base font-bold text-foreground">Lead Funnel</h3>
             <p className="mb-2 text-[10px] text-muted-foreground">Click a bar to filter leads</p>
             <ResponsiveContainer width="100%" height={220}>
