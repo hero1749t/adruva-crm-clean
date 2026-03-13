@@ -44,6 +44,17 @@ const activityTypeIcons: Record<string, typeof MessageSquare> = {
   document: FileText,
 };
 
+function invalidateLeadRelatedQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ["lead"] });
+  queryClient.invalidateQueries({ queryKey: ["leads"] });
+  queryClient.invalidateQueries({ queryKey: ["leads-kanban"] });
+  queryClient.invalidateQueries({ queryKey: ["clients"] });
+  queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  queryClient.invalidateQueries({ queryKey: ["leads-dashboard"] });
+  queryClient.invalidateQueries({ queryKey: ["clients-dashboard"] });
+  queryClient.invalidateQueries({ queryKey: ["tasks-dashboard"] });
+}
+
 const LeadDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -137,8 +148,7 @@ const LeadDetailPage = () => {
       } else {
         logActivity({ entity: "lead", entityId: id!, action: "updated", metadata: { name: lead?.name } });
       }
-      queryClient.invalidateQueries({ queryKey: ["lead", id] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      invalidateLeadRelatedQueries(queryClient);
       toast({ title: "Lead updated" });
     },
     onError: (err: Error) => {

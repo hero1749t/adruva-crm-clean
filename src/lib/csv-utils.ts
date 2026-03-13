@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CustomFieldDef } from "@/hooks/useCustomFields";
+import { isMissingRelationError } from "@/lib/supabase-errors";
 
 const CSV_HEADERS = [
   "name",
@@ -9,7 +10,6 @@ const CSV_HEADERS = [
   "source",
   "service_interest",
   "business_type",
-  "budget",
   "status",
   "notes",
 ] as const;
@@ -134,11 +134,14 @@ export async function importLeadsCsv(file: File): Promise<ImportResult> {
   // Fetch custom field definitions for mapping
   let customFieldMap: Record<string, string> = {}; // field_key -> def id
   if (customHeaders.length > 0) {
-    const { data: defs } = await supabase
+    const { data: defs, error } = await supabase
       .from("custom_field_definitions")
       .select("id, field_key")
       .eq("entity_type", "lead")
       .in("field_key", customHeaders);
+    if (error && !isMissingRelationError(error, "custom_field_definitions")) {
+      throw error;
+    }
     for (const def of defs || []) {
       customFieldMap[def.field_key] = def.id;
     }
@@ -173,7 +176,6 @@ export async function importLeadsCsv(file: File): Promise<ImportResult> {
       source: row.source?.trim() || null,
       service_interest: row.service_interest?.trim() ? row.service_interest.trim().split(";").map(s => s.trim()) : null,
       business_type: row.business_type?.trim() || null,
-      budget: row.budget?.trim() || null,
       notes: row.notes?.trim() || null,
     });
 
@@ -217,7 +219,10 @@ export async function importLeadsCsv(file: File): Promise<ImportResult> {
           }
         }
         if (cfInserts.length > 0) {
-          await supabase.from("custom_field_values").insert(cfInserts);
+          const { error } = await supabase.from("custom_field_values").insert(cfInserts);
+          if (error && !isMissingRelationError(error, "custom_field_values")) {
+            throw error;
+          }
         }
       }
     }
@@ -228,12 +233,15 @@ export async function importLeadsCsv(file: File): Promise<ImportResult> {
 
 export async function downloadCsvTemplate() {
   // Fetch custom field definitions for leads dynamically
-  const { data: customDefs } = await supabase
+  const { data: customDefs, error } = await supabase
     .from("custom_field_definitions")
     .select("field_key")
     .eq("entity_type", "lead")
     .eq("is_visible", true)
     .order("sort_order");
+  if (error && !isMissingRelationError(error, "custom_field_definitions")) {
+    throw error;
+  }
 
   const allHeaders = [...CSV_HEADERS, ...(customDefs || []).map((d) => d.field_key)];
   const sampleRow = ["John Doe", "john@example.com", "+1234567890", "Acme Corp", "google", "SEO;PPC", "restaurant", "10k_25k", "", "Initial contact", ...(customDefs || []).map(() => "")];

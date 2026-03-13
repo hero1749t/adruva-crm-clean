@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getErrorMessage, isMissingRelationError } from "@/lib/supabase-errors";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -359,7 +360,7 @@ export default function CustomFieldsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingField, setEditingField] = useState<FieldDefinition | null>(null);
 
-  const { data: fields = [], isLoading } = useQuery({
+  const { data: fields = [], isLoading, error: fieldsError } = useQuery({
     queryKey: ["custom-field-definitions"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -377,7 +378,15 @@ export default function CustomFieldsPage() {
 
   const leadFields = fields.filter(f => f.entity_type === "lead");
   const clientFields = fields.filter(f => f.entity_type === "client");
-  const activeFields = activeTab === "lead" ? leadFields : clientFields;
+  const customFieldsUnavailable = isMissingRelationError(fieldsError, "custom_field_definitions");
+  const customFieldsUnavailableMessage = "Database me `custom_field_definitions` aur `custom_field_values` tables missing hain. `supabase/migrations/20260309040624_693df230-54e9-4759-bf49-a60ef66d4520.sql` apply karo, phir page normal kaam karega.";
+
+  const invalidateCustomFieldQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["custom-field-definitions"] });
+    queryClient.invalidateQueries({ queryKey: ["custom-field-defs"] });
+    queryClient.invalidateQueries({ queryKey: ["custom-field-values"] });
+    queryClient.invalidateQueries({ queryKey: ["custom-field-values-bulk"] });
+  };
 
   const createField = useMutation({
     mutationFn: async (data: Omit<FieldDefinition, "id" | "created_at">) => {
@@ -388,11 +397,16 @@ export default function CustomFieldsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["custom-field-definitions"] });
+      invalidateCustomFieldQueries();
       toast({ title: "Field added" });
       setCreateOpen(false);
     },
-    onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+    onError: (error) => {
+      const description = customFieldsUnavailable || isMissingRelationError(error, "custom_field_definitions")
+        ? customFieldsUnavailableMessage
+        : getErrorMessage(error, "Unable to add field");
+      toast({ title: "Failed", description, variant: "destructive" });
+    },
   });
 
   const updateField = useMutation({
@@ -404,11 +418,16 @@ export default function CustomFieldsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["custom-field-definitions"] });
+      invalidateCustomFieldQueries();
       toast({ title: "Field updated" });
       setEditingField(null);
     },
-    onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+    onError: (error) => {
+      const description = customFieldsUnavailable || isMissingRelationError(error, "custom_field_definitions")
+        ? customFieldsUnavailableMessage
+        : getErrorMessage(error, "Unable to update field");
+      toast({ title: "Failed", description, variant: "destructive" });
+    },
   });
 
   const deleteField = useMutation({
@@ -417,10 +436,15 @@ export default function CustomFieldsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["custom-field-definitions"] });
+      invalidateCustomFieldQueries();
       toast({ title: "Field deleted" });
     },
-    onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+    onError: (error) => {
+      const description = customFieldsUnavailable || isMissingRelationError(error, "custom_field_definitions")
+        ? customFieldsUnavailableMessage
+        : getErrorMessage(error, "Unable to delete field");
+      toast({ title: "Failed", description, variant: "destructive" });
+    },
   });
 
   return (
@@ -435,7 +459,7 @@ export default function CustomFieldsPage() {
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-2">
+            <Button size="sm" className="gap-2" disabled={customFieldsUnavailable}>
               <Plus className="h-4 w-4" /> Add Field
             </Button>
           </DialogTrigger>
@@ -463,6 +487,14 @@ export default function CustomFieldsPage() {
           or <span className="font-medium text-foreground">Text / Number</span> for details like "Budget Range", "Website URL", "GST Number".
         </p>
       </div>
+
+      {customFieldsUnavailable && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+          <p className="text-sm text-destructive">
+            {customFieldsUnavailableMessage}
+          </p>
+        </div>
+      )}
 
       {/* Edit dialog */}
       {editingField && (
@@ -497,36 +529,39 @@ export default function CustomFieldsPage() {
 
         {(["lead", "client"] as const).map(tab => (
           <TabsContent key={tab} value={tab} className="mt-4 space-y-2">
-            {isLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl border border-border bg-muted/20" />
-              ))
-            ) : activeFields.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                  <Plus className="h-6 w-6 text-primary" />
+            {(() => {
+              const tabFields = tab === "lead" ? leadFields : clientFields;
+              return isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-16 animate-pulse rounded-xl border border-border bg-muted/20" />
+                ))
+              ) : tabFields.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                    <Plus className="h-6 w-6 text-primary" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">No custom fields yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Add fields like "Property Type", "Budget", "GST Number", "Website URL"...
+                  </p>
+                  <Button size="sm" className="mt-4 gap-2" onClick={() => setCreateOpen(true)} disabled={customFieldsUnavailable}>
+                    <Plus className="h-4 w-4" /> Add First Field
+                  </Button>
                 </div>
-                <p className="text-sm font-semibold text-foreground">No custom fields yet</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Add fields like "Property Type", "Budget", "GST Number", "Website URL"…
-                </p>
-                <Button size="sm" className="mt-4 gap-2" onClick={() => setCreateOpen(true)}>
-                  <Plus className="h-4 w-4" /> Add First Field
-                </Button>
-              </div>
-            ) : (
-              activeFields.map(field => (
-                <FieldCard
-                  key={field.id}
-                  field={field}
-                  onEdit={() => setEditingField(field)}
-                  onDelete={() => deleteField.mutate(field.id)}
-                  onToggleVisibility={() =>
-                    updateField.mutate({ id: field.id, data: { is_visible: !field.is_visible } })
-                  }
-                />
-              ))
-            )}
+              ) : (
+                tabFields.map(field => (
+                  <FieldCard
+                    key={field.id}
+                    field={field}
+                    onEdit={() => setEditingField(field)}
+                    onDelete={() => deleteField.mutate(field.id)}
+                    onToggleVisibility={() =>
+                      updateField.mutate({ id: field.id, data: { is_visible: !field.is_visible } })
+                    }
+                  />
+                ))
+              );
+            })()}
           </TabsContent>
         ))}
       </Tabs>

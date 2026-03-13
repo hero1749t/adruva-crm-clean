@@ -11,9 +11,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -60,120 +57,46 @@ serve(async (req) => {
       .select("title, is_completed")
       .eq("client_id", clientId);
 
-    const today = new Date().toISOString().split("T")[0];
+    // Generate basic insights without external AI
+    const completedTasks = tasks?.filter(t => t.status === "completed").length || 0;
+    const pendingTasks = tasks?.filter(t => t.status !== "completed").length || 0;
+    const completedOnboarding = onboarding?.filter(o => o.is_completed).length || 0;
+    const totalOnboarding = onboarding?.length || 0;
 
-    const prompt = `You are an expert CRM analyst for a digital marketing agency. Analyze this client data and provide actionable insights.
-
-CLIENT INFO:
-- Name: ${client.client_name}
-- Company: ${client.company_name || "N/A"}
-- Plan: ${client.plan || "N/A"}
-- Status: ${client.status}
-- Billing: ${client.billing_status}
-- Monthly Payment: ₹${client.monthly_payment || 0}
-- Start Date: ${client.start_date || "N/A"}
-- Contract End: ${client.contract_end_date || "N/A"}
-- Today: ${today}
-
-TASKS (${tasks?.length || 0}):
-${tasks?.map((t) => `- ${t.task_title} | ${t.status} | ${t.priority} | Due: ${t.deadline || "N/A"}`).join("\n") || "None"}
-
-INVOICES (${invoices?.length || 0}):
-${invoices?.map((i) => `- ${i.invoice_number} | ${i.status} | ₹${i.total_amount} | Due: ${i.due_date} | Paid: ${i.paid_date || "N/A"}`).join("\n") || "None"}
-
-COMMUNICATIONS (${commsLogs?.length || 0}):
-${commsLogs?.map((c) => `- ${c.type} (${c.direction}) | ${c.subject || "No subject"} | ${c.created_at}`).join("\n") || "None"}
-
-ONBOARDING (${onboarding?.length || 0} items):
-${onboarding?.map((o) => `- ${o.title}: ${o.is_completed ? "✅" : "❌"}`).join("\n") || "None"}
-
-Respond using this tool to return structured insights.`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
+    const insights = {
+      health_prediction: {
+        score: Math.min(100, Math.max(0, 
+          (completedOnboarding / Math.max(1, totalOnboarding)) * 40 +
+          (completedTasks / Math.max(1, completedTasks + pendingTasks)) * 30 +
+          (client.status === "active" ? 30 : 10)
+        )),
+        trend: pendingTasks > 3 ? "declining" : completedOnboarding > 0 ? "improving" : "stable",
+        summary: client.status === "active" ? "Client is active and engaged" : "Client status needs attention"
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: "You are a CRM analytics AI. Always respond via the provided tool." },
-          { role: "user", content: prompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_insights",
-              description: "Return structured client insights with health prediction, activity summary, and recommended actions.",
-              parameters: {
-                type: "object",
-                properties: {
-                  health_prediction: {
-                    type: "object",
-                    properties: {
-                      score: { type: "number", description: "Predicted health score 0-100" },
-                      trend: { type: "string", enum: ["improving", "stable", "declining"] },
-                      summary: { type: "string", description: "One-sentence health prediction" },
-                    },
-                    required: ["score", "trend", "summary"],
-                  },
-                  activity_summary: {
-                    type: "string",
-                    description: "2-3 sentence summary of recent client activity and engagement patterns",
-                  },
-                  recommended_actions: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        action: { type: "string", description: "Specific action to take" },
-                        priority: { type: "string", enum: ["high", "medium", "low"] },
-                        reason: { type: "string", description: "Why this action matters" },
-                      },
-                      required: ["action", "priority", "reason"],
-                    },
-                    description: "3-5 recommended actions sorted by priority",
-                  },
-                  risk_flags: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "List of risk factors (empty if none)",
-                  },
-                },
-                required: ["health_prediction", "activity_summary", "recommended_actions", "risk_flags"],
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "return_insights" } },
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits in Settings." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
-
-    const aiData = await response.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("No tool call in AI response");
-
-    const insights = JSON.parse(toolCall.function.arguments);
+      activity_summary: `Client ${client.client_name} has ${completedTasks} completed tasks and ${pendingTasks} pending tasks. Onboarding progress: ${completedOnboarding}/${totalOnboarding} items completed. Recent communications: ${commsLogs?.length || 0} logs.`,
+      recommended_actions: [
+        {
+          action: "Review pending tasks",
+          priority: pendingTasks > 0 ? "high" : "low",
+          reason: `${pendingTasks} tasks still pending that may need attention`
+        },
+        {
+          action: "Complete onboarding",
+          priority: completedOnboarding < totalOnboarding ? "high" : "low",
+          reason: `${totalOnboarding - completedOnboarding} onboarding items remaining`
+        },
+        {
+          action: "Send status update",
+          priority: "medium",
+          reason: "Regular communication keeps clients engaged"
+        }
+      ],
+      risk_flags: [
+        ...(pendingTasks > 5 ? ["High number of pending tasks"] : []),
+        ...(client.billing_status !== "paid" ? ["Payment pending"] : []),
+        ...(completedOnboarding < totalOnboarding / 2 ? ["Low onboarding progress"] : [])
+      ]
+    };
 
     return new Response(JSON.stringify(insights), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

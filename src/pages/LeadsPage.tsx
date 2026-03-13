@@ -46,6 +46,16 @@ const leadStatusConfig: Record<string, { label: string; color: string }> = {
   lead_lost: { label: "Lead Lost", color: "bg-destructive/20 text-destructive" },
 };
 
+function invalidateLeadRelatedQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ["leads"] });
+  queryClient.invalidateQueries({ queryKey: ["leads-kanban"] });
+  queryClient.invalidateQueries({ queryKey: ["clients"] });
+  queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  queryClient.invalidateQueries({ queryKey: ["leads-dashboard"] });
+  queryClient.invalidateQueries({ queryKey: ["clients-dashboard"] });
+  queryClient.invalidateQueries({ queryKey: ["tasks-dashboard"] });
+}
+
 const LeadsPage = () => {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
@@ -214,7 +224,7 @@ const LeadsPage = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      invalidateLeadRelatedQueries(queryClient);
       toast({ title: `${selected.size} lead(s) reassigned` });
       clearSelection();
       setAssignDialogOpen(false);
@@ -236,7 +246,7 @@ const LeadsPage = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      invalidateLeadRelatedQueries(queryClient);
       toast({ title: `${selected.size} lead(s) status updated` });
       clearSelection();
       setStatusDialogOpen(false);
@@ -258,7 +268,7 @@ const LeadsPage = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      invalidateLeadRelatedQueries(queryClient);
       toast({ title: `${selected.size} lead(s) deleted` });
       clearSelection();
       setDeleteDialogOpen(false);
@@ -460,7 +470,7 @@ const LeadsPage = () => {
                           onValueChange={(v) => {
                             const oldStatus = lead.status;
                             supabase.from("leads").update({ status: v as any }).eq("id", lead.id).then(() => {
-                              queryClient.invalidateQueries({ queryKey: ["leads"] });
+                              invalidateLeadRelatedQueries(queryClient);
                               logActivity({ entity: "lead", entityId: lead.id, action: "status_changed", metadata: { name: lead.name, from: oldStatus, to: v } });
                               sendStatusEmail({ entity: "lead", entityName: lead.name, oldStatus, newStatus: v, assignedTo: lead.assigned_to });
                             });

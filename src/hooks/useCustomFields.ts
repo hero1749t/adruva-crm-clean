@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isMissingRelationError } from "@/lib/supabase-errors";
 
 export interface CustomFieldDef {
   id: string;
@@ -15,13 +16,21 @@ export interface CustomFieldDef {
 export function useCustomFieldDefs(entityType: "lead" | "client") {
   return useQuery({
     queryKey: ["custom-field-defs", entityType],
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("custom_field_definitions")
         .select("*")
         .eq("entity_type", entityType)
         .eq("is_visible", true)
         .order("sort_order");
+      if (error) {
+        if (isMissingRelationError(error, "custom_field_definitions")) {
+          return [];
+        }
+        throw error;
+      }
       return (data || []) as CustomFieldDef[];
     },
   });
@@ -30,13 +39,21 @@ export function useCustomFieldDefs(entityType: "lead" | "client") {
 export function useCustomFieldValues(entityType: "lead" | "client", entityIds: string[]) {
   return useQuery({
     queryKey: ["custom-field-values-bulk", entityType, entityIds],
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       if (entityIds.length === 0) return {};
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("custom_field_values")
         .select("entity_id, field_definition_id, value")
         .eq("entity_type", entityType)
         .in("entity_id", entityIds);
+      if (error) {
+        if (isMissingRelationError(error, "custom_field_values")) {
+          return {};
+        }
+        throw error;
+      }
 
       // Map: entityId -> { defId -> value }
       const map: Record<string, Record<string, string>> = {};

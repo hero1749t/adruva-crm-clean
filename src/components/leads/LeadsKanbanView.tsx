@@ -63,6 +63,16 @@ const COLUMNS = [
   },
 ] as const;
 
+function invalidateLeadRelatedQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ["leads"] });
+  queryClient.invalidateQueries({ queryKey: ["leads-kanban"] });
+  queryClient.invalidateQueries({ queryKey: ["clients"] });
+  queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  queryClient.invalidateQueries({ queryKey: ["leads-dashboard"] });
+  queryClient.invalidateQueries({ queryKey: ["clients-dashboard"] });
+  queryClient.invalidateQueries({ queryKey: ["tasks-dashboard"] });
+}
+
 interface Lead {
   id: string;
   name: string;
@@ -116,8 +126,7 @@ export default function LeadsKanbanView({ leads, isLoading }: Props) {
 
     const oldStatus = lead.status;
     await supabase.from("leads").update({ status: newStatus as any }).eq("id", leadId);
-    queryClient.invalidateQueries({ queryKey: ["leads"] });
-    queryClient.invalidateQueries({ queryKey: ["leads-kanban"] });
+    invalidateLeadRelatedQueries(queryClient);
     logActivity({ entity: "lead", entityId: leadId, action: "status_changed", metadata: { name: lead.name, from: oldStatus, to: newStatus } });
     sendStatusEmail({ entity: "lead", entityName: lead.name, oldStatus, newStatus, assignedTo: lead.assigned_to });
     toast({ title: `${lead.name} → ${COLUMNS.find((c) => c.id === newStatus)?.label}` });

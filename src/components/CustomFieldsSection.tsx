@@ -9,6 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage, isMissingRelationError } from "@/lib/supabase-errors";
 
 interface CustomFieldsSectionProps {
   entityType: "lead" | "client";
@@ -35,15 +36,21 @@ export function CustomFieldsSection({ entityType, entityId }: CustomFieldsSectio
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
-  const { data: definitions = [] } = useQuery({
+  const { data: definitions = [], error: definitionsError } = useQuery({
     queryKey: ["custom-field-defs", entityType],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("custom_field_definitions")
         .select("*")
         .eq("entity_type", entityType)
         .eq("is_visible", true)
         .order("sort_order");
+      if (error) {
+        if (isMissingRelationError(error, "custom_field_definitions")) {
+          return [];
+        }
+        throw error;
+      }
       return (data || []) as FieldDefinition[];
     },
   });
@@ -51,11 +58,17 @@ export function CustomFieldsSection({ entityType, entityId }: CustomFieldsSectio
   const { data: values = [] } = useQuery({
     queryKey: ["custom-field-values", entityType, entityId],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("custom_field_values")
         .select("*")
         .eq("entity_type", entityType)
         .eq("entity_id", entityId);
+      if (error) {
+        if (isMissingRelationError(error, "custom_field_values")) {
+          return [];
+        }
+        throw error;
+      }
       return data || [];
     },
     enabled: !!entityId,
@@ -84,12 +97,41 @@ export function CustomFieldsSection({ entityType, entityId }: CustomFieldsSectio
       queryClient.invalidateQueries({ queryKey: ["custom-field-values", entityType, entityId] });
       toast({ title: "Field updated" });
     },
-    onError: (err: Error) => {
-      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    onError: (error) => {
+      const description = isMissingRelationError(error, "custom_field_values")
+        ? "Custom fields backend abhi database me setup nahi hai. Pehle migration apply karni hogi."
+        : getErrorMessage(error, "Unable to update custom field");
+      toast({ title: "Update failed", description, variant: "destructive" });
     },
   });
 
-  if (definitions.length === 0) return null;
+  const customFieldsUnavailable = isMissingRelationError(definitionsError, "custom_field_definitions");
+
+  if (customFieldsUnavailable) {
+    return (
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+        <h2 className="mb-2 flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-widest text-destructive">
+          <Tags className="h-3.5 w-3.5" /> Custom Fields
+        </h2>
+        <p className="text-sm text-destructive">
+          Custom fields backend abhi database me setup nahi hai. Migration apply karne ke baad yahan fields dikhne lagenge.
+        </p>
+      </div>
+    );
+  }
+
+  if (definitions.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-card/60 p-4">
+        <h2 className="mb-2 flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-widest text-primary">
+          <Tags className="h-3.5 w-3.5" /> Custom Fields
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Abhi is {entityType} ke liye koi custom field configured nahi hai.
+        </p>
+      </div>
+    );
+  }
 
   const getFieldValue = (defId: string): string => {
     const v = values.find((val) => val.field_definition_id === defId);
@@ -174,7 +216,12 @@ export function CustomFieldsSection({ entityType, entityId }: CustomFieldsSectio
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm text-foreground">{currentValue || "—"}</p>
                     {isOwnerOrAdmin && (
-                      <button onClick={() => startEdit(def.id)} className="opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        onClick={() => startEdit(def.id)}
+                        disabled={customFieldsUnavailable}
+                        className="opacity-70 transition-opacity group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label={`Edit ${def.label}`}
+                      >
                         <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
                       </button>
                     )}
